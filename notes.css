@@ -1,0 +1,129 @@
+/* MD3012 handwritten-notes style. Placeholders substituted by build_notes_pdf.sh: FONTDIR var(--fill) var(--txt) RUNHEAD */
+@font-face{font-family:"Patrick Hand";src:url("fonts/PatrickHand-Regular.ttf")}
+@font-face{font-family:"Nunito";src:url("fonts/Nunito[wght].ttf");font-weight:200 1000}
+@font-face{font-family:"NSMath";src:url("fonts/NotoSansMath-Regular.ttf")}
+@font-face{font-family:"NSSym";src:url("fonts/NotoSansSymbols[wght].ttf");font-weight:100 900}
+:root{--ink:#2D2D2D;--red:#D2453A}
+
+
+html{font-family:"Nunito","NSMath","NSSym",sans-serif;font-size:10pt;line-height:1.36;color:var(--ink)}
+body{margin:0}
+.hand,.lab,h1,h2,.annot,.said,.clab,th,.title{font-family:"Patrick Hand","NSMath","NSSym"}
+/* cover */
+.cover .title{display:inline-block;font-size:30pt;font-weight:bold;background:var(--fill);color:var(--ink);border-radius:22px;padding:2mm 8mm;margin:6mm 0 4mm;line-height:1.2}
+.cover .mod{font:15pt "Patrick Hand","NSSym";color:var(--txt)}
+.cover .big{font:13pt/1.4 "Patrick Hand","NSMath","NSSym";background:#FDF1A6;border-radius:10px;padding:3mm 4mm;margin:3mm 0}
+.cover img{width:100%;max-height:105mm;object-fit:contain}
+.abbr{background:#fff8;border-radius:10px;padding:3mm 4mm;font-size:8.8pt;line-height:1.5;margin-top:3mm;break-inside:avoid}
+.abbr b{color:var(--txt)}
+/* layout */
+.cols{columns:2;column-gap:7mm;column-fill:balance}
+.cols3{columns:3;column-fill:balance;column-gap:6mm;font-size:9.4pt}
+.pb{break-before:page}
+h1{font-size:19pt;font-weight:normal;margin:4mm 0 2mm;display:block;background:linear-gradient(transparent 52%,var(--fill) 52%);width:fit-content;padding:0 3mm 0 1mm;column-span:all;break-after:avoid}
+h2{font-size:14pt;font-weight:normal;color:var(--txt);margin:3mm 0 1mm;break-after:avoid}
+.lab{font-size:12.5pt;display:inline-block;background:linear-gradient(transparent 45%,var(--fill) 45%);padding:0 2mm 0 0;margin:1.2mm 0 .3mm;break-after:avoid}
+.lab.sub{background:none;color:var(--txt)}
+p{margin:0 0 1.5mm}
+.chunk{break-inside:avoid;margin-bottom:1mm}
+.chunk p{margin:0}
+ul{margin:.5mm 0 1mm;padding:0;list-style:none}
+li{margin:0 0 .4mm;padding-left:4mm;position:relative}
+li::before{content:"•";position:absolute;left:0;color:var(--txt)}
+li.sub{padding-left:8mm}li.sub::before,li.step::before{content:none}
+li.step{padding-left:0}
+b,strong{color:var(--txt);font-weight:800}
+.y{background:#FDF1A6;border-radius:3px;padding:0 1px;font-weight:700}
+.def{background:#CFE3F7;border-radius:3px;padding:0 2px}
+/* tags + said */
+.tag{display:inline-block;font:800 7pt "Nunito";color:#fff;border-radius:8px;padding:0 5px;vertical-align:1px;margin-right:2px}
+.exam{background:#DC2626}.emph{background:#EA580C}.bg{background:#A8A27A}.gl{background:#2563EB}
+.said{display:block;font-size:9pt;color:#444;line-height:1.25;margin:.8mm 0 .8mm;font-weight:normal;background:#EEF4FB;border-left:2.2mm solid #7FA6D6;border-radius:3px 9px 9px 3px;padding:.7mm 2mm .7mm 2.2mm}
+.said::before{content:"\201C";font:15pt/0.6 "Patrick Hand";color:#7FA6D6;margin-right:1mm;vertical-align:-1.5mm}
+li.ex{background:#FDECEC;border-radius:9px;padding:.8mm 2mm .8mm 4.5mm;margin:.8mm 0}li.ex::before{left:1.5mm;color:#DC2626}
+li.ex .said{background:#fff;border-left-color:#DC2626}li.ex .said::before{color:#DC2626}
+li.em{background:#FFF1E0;border-radius:9px;padding:.8mm 2mm .8mm 4.5mm;margin:.8mm 0}li.em::before{left:1.5mm;color:#EA580C}
+li.em .said{background:#fff;border-left-color:#EA580C}li.em .said::before{color:#EA580C}
+li.ex.sub,li.em.sub{padding-left:8mm}
+table a::after{content:" p." target-counter(attr(href),page);font-size:8pt;color:#888}
+.annot{color:var(--red);font-size:11pt;white-space:nowrap}
+/* callouts */
+.note,.tip,.guide,.remember{border-radius:10px;padding:2mm 3mm;margin:1.2mm 0;break-inside:avoid}
+.note{background:#F6C1B4}.tip{background:#FDECEC}.guide{background:#E3EEFB}.remember{background:#FFF4D6}
+.clab{display:block;font-size:12pt;color:#B83260;line-height:1.1}
+.note .clab{color:#B83260}.guide .clab{color:#2563EB}.tip .clab{color:#DC2626}.remember .clab{color:#B0701A}
+.note ul,.tip ul,.guide ul,.remember ul{margin:0}
+/* pairs */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:3mm;break-inside:avoid;margin:1mm 0 2mm}
+.side{background:#fff8;border-radius:10px;padding:1mm 3mm}
+/* tables */
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:9pt;line-height:1.25;margin:1mm 0 2mm;border-radius:10px;overflow:hidden;break-inside:auto}
+th{background:var(--fill);text-align:left;font-weight:normal;font-size:11.5pt;padding:1.2mm 2mm}
+td{padding:1mm 2mm;vertical-align:top}
+tr{break-inside:avoid}
+tbody tr:nth-child(even) td{background:#ffffffaa}
+/* figures */
+figure{margin:1mm 0 2mm;break-inside:avoid;text-align:center}
+img{width:100%;height:auto;max-height:118mm;object-fit:contain}
+figcaption{font:9.5pt "Patrick Hand","NSMath","NSSym";color:#666}
+.wide{column-span:all}
+a{color:var(--txt);text-decoration:none}
+.small{font-size:9pt}
+
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2mm 6mm;font-size:9.4pt;break-inside:avoid;margin:1mm 0 2mm}
+li.step{padding-left:5mm;text-indent:-5mm}
+h1.lo{break-before:auto;break-after:avoid;margin-top:5mm}
+h1.lo.newpage{break-before:page}
+.quiz{background:#EDE4FA;border-radius:10px;padding:2mm 3mm;margin:1.2mm 0;break-inside:avoid;font-size:9pt;line-height:1.3}
+.quiz .clab{color:#6D43B5}
+.quiz ul{margin:0;columns:3;column-gap:5mm}
+.quiz li{break-inside:avoid;margin-bottom:1.2mm}
+.quiz li::before{content:none}.quiz li{padding-left:0}
+
+.quiz li{margin-bottom:1.6mm}
+.quiz .q{font-weight:600}
+.quiz .ans{display:block;color:#6D43B5;font-weight:bold;padding-left:4mm}
+.quiz .ans::before{content:"A: ";color:#9A7BD0}
+.quiz .q::before{content:"Q: ";color:#9A7BD0}
+.flow ul{margin:0 0 1mm}
+.flow li{background:#FFFC;border:1px solid var(--fill);border-radius:8px;padding:.7mm 2.5mm;margin:0 0 3.6mm;position:relative;text-indent:0}
+.flow li::before{content:none}
+.flow li::after{content:"↓";position:absolute;left:50%;bottom:-3.9mm;font:9pt "NSMath","Patrick Hand";color:var(--txt);line-height:1}
+.flow li:last-child::after{content:none}
+.flow li:last-child{margin-bottom:1mm}
+.flow li.sub{padding-left:2.5mm}
+.cap{display:block;font:9.5pt "Patrick Hand","NSMath","NSSym";color:#666;text-align:center;margin:-1mm 0 2mm}
+
+/* keep blocks together on one page; smaller wide figure */
+.keep{break-inside:avoid}
+.ov img{width:auto;max-height:88mm;max-width:100%}
+table{break-inside:avoid}
+
+/* two-column split: diagram/list on one side, text on the other (added 5 Oct) */
+.s2grid{display:grid;grid-template-columns:0.85fr 1.15fr;gap:6mm;break-inside:avoid;margin:1mm 0 2mm}
+.s2grid figure{margin:2mm 0 0}
+.s2grid img{width:100%;max-height:none}
+/* core-item highlighter (added 5 Oct) */
+.core{background:#FDF1A6;font-weight:700;border-radius:3px;padding:0 1mm;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+/* diagram colour legends (added 2026-10-06) */
+.figwrap{break-inside:avoid;margin:0 0 1.5mm}
+.figwrap > p{margin:0}
+.lgd{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:0.6mm 3.2mm;font-family:"Patrick Hand","NSMath","NSSym",sans-serif;font-size:8.6pt;color:#555;margin:0.6mm 0 0;line-height:1.15}
+.lgd .lk{font-weight:700;color:var(--txt);margin-right:0.5mm}
+.lgd .li{display:inline-flex;align-items:center;gap:1.2mm;white-space:nowrap}
+.lgd .sw{display:inline-block;width:4.2mm;height:2.8mm;border-radius:1mm;border:0.35mm solid var(--txt)}
+.lgd .sw.def{background:var(--fill)}
+.lgd .sw.red{border-color:#D2453A}
+.lgd .sw.circ{border-radius:50%;width:3.2mm;height:3.2mm}
+.lgd .ed{color:var(--txt);font-weight:700}
+.cols3 > .qflow{break-inside:auto}
+.mn{color:#D2453A;font-weight:800;background:#FDF1A6;border-radius:2px;padding:0 0.4mm}
+.xref{font-family:"Patrick Hand","NSMath","NSSym";font-size:9pt;color:#2563EB;text-decoration:none;border-bottom:0.2mm dotted #2563EB;margin-left:1.5mm}
+/* Self-test + answers (2026-10-11): numbered list flowing over 3 balanced columns, hanging numbers */
+.st li{padding-left:6.2mm;margin:0 0 1mm;break-inside:avoid}
+.st li::before{content:none}
+.st .qn{position:absolute;left:0;top:0;width:5mm;text-align:right;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums}
+/* round1: step items (hanging indent) must not pass the negative indent into badges / said boxes */
+li.step .tag,li.step .said,li.step .annot{text-indent:0}
+/* round1: keep LO-map jump links ("⑥ → p.7") on one line */
+table a{white-space:nowrap}table a::after{content:"\a0p." target-counter(attr(href),page)}
