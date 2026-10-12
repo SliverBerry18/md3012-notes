@@ -120,19 +120,29 @@
     g.innerHTML = '<form class="md-login" autocomplete="on"><p class="md-brand">MD3012 notes</p>' +
       '<p class="md-sub">Year 3 MBBS revision notes. Sign in to open them.</p>' +
       '<label>Name<input name="username" autocomplete="username" required></label>' +
-      '<label>Password<input name="password" type="password" autocomplete="current-password" required></label>' +
+      '<label>Password<span class="md-pw"><input name="password" type="password" autocomplete="current-password" required>' +
+      '<button type="button" class="md-eye" aria-label="Show password" aria-pressed="false">Show</button></span></label>' +
       '<label class="md-rem"><input type="checkbox" name="remember" checked> Stay signed in on this device</label>' +
       '<button type="submit">Open notes</button><p class="md-err" role="alert">' + (msg ? esc(msg) : '') + '</p></form>';
     var f = g.querySelector('form');
     f.username.focus();
+    var eye = f.querySelector('.md-eye');
+    eye.addEventListener('click', function () {
+      var show = f.password.type === 'password';
+      f.password.type = show ? 'text' : 'password';
+      eye.textContent = show ? 'Hide' : 'Show';
+      eye.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      eye.setAttribute('aria-pressed', String(show));
+      f.password.focus();
+    });
     f.addEventListener('submit', async function (e) {
       e.preventDefault();
       var name = f.username.value.trim(), pw = f.password.value;
       if (!name) { f.querySelector('.md-err').textContent = 'Please enter your name.'; return; }
-      var btn = f.querySelector('button'); btn.disabled = true; btn.textContent = 'Checking…';
+      var btn = f.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Checking…';
       var r = await unwrap(pw);
       if (!r) { btn.disabled = false; btn.textContent = 'Open notes'; f.querySelector('.md-err').textContent = 'That password isn’t right. Check it and try again.'; f.password.select(); return; }
-      key = await crypto.subtle.importKey('raw', r.raw, 'AES-GCM', false, ['decrypt']);
+      f.password.type = 'password'; key = await crypto.subtle.importKey('raw', r.raw, 'AES-GCM', false, ['decrypt']);
       var who = { name: name, role: r.role, k: tob64(r.raw), kid: A.kid };
       save(who, f.remember.checked);
       try { await open(who); } catch (err) { showLogin('Something went wrong opening this page. Please reload.'); }
