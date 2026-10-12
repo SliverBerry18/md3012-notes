@@ -603,3 +603,6 @@ body.flagging,body.flagging *{cursor:crosshair!important}
  .qcard .qtext{font-size:19.5px}
 }
 @media (prefers-reduced-motion:reduce){.cell::before,.toc{transition:none}}
+
+/* admin-only sections (temporary): hide their links for members */
+body.member a[href$="practice.html"],body.member a[href$="images.html"],body.member a[href$="quiz.html"]{display:none!important}

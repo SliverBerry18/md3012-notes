@@ -11,6 +11,7 @@
   var tob64 = function (u) { var s = ''; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var key = null;
+  var ADMIN_ONLY = ['practice', 'images'];   // page <main> ids only the admin can use; empty this list to open them to everyone
 
   var getSaved = function () { try { return JSON.parse(localStorage.getItem(SKEY) || sessionStorage.getItem(SKEY) || 'null'); } catch (e) { return null; } };
   var save = function (o, remember) { try { (remember ? localStorage : sessionStorage).setItem(SKEY, JSON.stringify(o)); } catch (e) {} };
@@ -94,6 +95,15 @@
     var page = JSON.parse(td.decode(raw));
     window.MD3012_USER = { name: who.name, role: who.role };
     var t = doc.createElement('template'); t.innerHTML = page.b;
+    // admin-only pages (temporary): members see a "coming soon" note and no links to them
+    if (who.role !== 'admin') {
+      body.classList.add('member');
+      ADMIN_ONLY.forEach(function (id) {
+        var m = t.content.getElementById(id); if (!m) return;
+        m.id = id + '-off';
+        m.innerHTML = '<h1>Coming soon</h1><p class="lead">This section is still being finished and will open shortly. Everything else in the notes is ready to use.</p><p><a class="btn solid" href="' + base + 'index.html">Back to the notes</a></p>';
+      });
+    }
     t.content.querySelectorAll('img').forEach(function (img) {
       var s = img.getAttribute('src'); if (isAsset(s)) { img.setAttribute('data-encsrc', s); img.removeAttribute('src'); }
     });
