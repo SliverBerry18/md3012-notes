@@ -11,6 +11,19 @@
   var tob64 = function (u) { var s = ''; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var key = null;
+  // sign-in log (Google Sheet): every sign-in, plus the first visit each day for people who stay signed in
+  var logVisit = function (who, type) {
+    if (!A.log) return;
+    var ua = navigator.userAgent;
+    var dev = /iPhone/.test(ua) ? 'iPhone' : /iPad|Macintosh.*Mobile/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : 'Other';
+    try { fetch(A.log, { method: 'POST', mode: 'no-cors', keepalive: true, headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ name: who.name, role: who.role, type: type, device: dev, page: location.pathname.replace(/^.*md3012-notes\//, '') || 'index.html' }) }); } catch (e) {}
+  };
+  var dailyVisit = function (who) {
+    var today = new Date().toDateString();
+    try { if (localStorage.getItem('md3012:seen') === today) return; localStorage.setItem('md3012:seen', today); } catch (e) { return; }
+    logVisit(who, 'return visit');
+  };
   var ADMIN_ONLY = ['practice', 'images'];   // page <main> ids only the admin can use; empty this list to open them to everyone
 
   var getSaved = function () { try { return JSON.parse(localStorage.getItem(SKEY) || sessionStorage.getItem(SKEY) || 'null'); } catch (e) { return null; } };
@@ -133,7 +146,8 @@
       '<label>Password<span class="md-pw"><input name="password" type="password" autocomplete="current-password" required>' +
       '<button type="button" class="md-eye" aria-label="Show password" aria-pressed="false">Show</button></span></label>' +
       '<label class="md-rem"><input type="checkbox" name="remember" checked> Stay signed in on this device</label>' +
-      '<button type="submit">Open notes</button><p class="md-err" role="alert">' + (msg ? esc(msg) : '') + '</p></form>';
+      '<button type="submit">Open notes</button><p class="md-err" role="alert">' + (msg ? esc(msg) : '') + '</p>' +
+      '<p class="md-fine">Sign-ins are recorded.</p></form>';
     var f = g.querySelector('form');
     f.username.focus();
     var eye = f.querySelector('.md-eye');
@@ -155,6 +169,7 @@
       f.password.type = 'password'; key = await crypto.subtle.importKey('raw', r.raw, 'AES-GCM', false, ['decrypt']);
       var who = { name: name, role: r.role, k: tob64(r.raw), kid: A.kid };
       save(who, f.remember.checked);
+      logVisit(who, 'sign-in'); try { localStorage.setItem('md3012:seen', new Date().toDateString()); } catch (e2) {}
       try { await open(who); } catch (err) { showLogin('Something went wrong opening this page. Please reload.'); }
     });
   };
@@ -166,7 +181,7 @@
     }
     var s = getSaved();
     if (s && s.k && s.kid === A.kid) {
-      try { key = await crypto.subtle.importKey('raw', unb64(s.k), 'AES-GCM', false, ['decrypt']); await open(s); return; } catch (e) { /* fall through to login */ }
+      try { key = await crypto.subtle.importKey('raw', unb64(s.k), 'AES-GCM', false, ['decrypt']); await open(s); dailyVisit(s); return; } catch (e) { /* fall through to login */ }
     }
     showLogin(s && s.kid !== A.kid ? 'The site’s password has changed. Please sign in again.' : '');
   })();

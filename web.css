@@ -535,6 +535,7 @@ body.locked > *:not(.md-gate):not(script){display:none!important}
 .md-login .md-rem{display:flex;gap:8px;align-items:center;font:14px "Nunito",sans-serif;color:var(--muted)}
 .md-login button{font:20px var(--hand);padding:9px 16px;border-radius:999px;border:0;background:var(--ink);color:var(--paper);cursor:pointer}
 .md-login button:disabled{opacity:.6}
+.md-login .md-fine{margin:-4px 0 0;font:11px "Nunito",sans-serif;color:var(--muted);text-align:center;opacity:.85}
 .md-pw{position:relative;display:block}
 .md-pw input{width:100%;box-sizing:border-box;padding-right:64px!important}
 .md-login .md-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);font:600 13px "Nunito",sans-serif;padding:5px 10px;border-radius:8px;background:transparent;color:var(--muted);border:1px solid transparent}
