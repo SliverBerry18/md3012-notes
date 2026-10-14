@@ -127,3 +127,4 @@ table{break-inside:avoid}
 li.step .tag,li.step .said,li.step .annot{text-indent:0}
 /* round1: keep LO-map jump links ("⑥ → p.7") on one line */
 table a{white-space:nowrap}table a::after{content:"\a0p." target-counter(attr(href),page)}
+.aside{display:block;font-size:9pt;color:#6b6b6b;font-style:italic;margin:1mm 0 .3mm;padding-left:2mm;border-left:1.5mm solid #ddd}

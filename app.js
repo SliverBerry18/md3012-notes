@@ -1315,16 +1315,20 @@
         (open.length ? '<ol>' + open.map(function (f) {
           return '<li><a href="' + base + f.page + '">' + escH(f.page) + '</a><p>' + escH(f.note) + '</p><span class="wt2">' + escH(f.what.kind + (f.what.sec ? ' in ' + f.what.sec : '')) + '</span><button type="button" class="skip" data-del="' + f.id + '">Delete</button></li>';
         }).join('') + '</ol>' : '<p class="qempty">No new flags. Tap “✎ Flag an edit”, then tap anything on any page.</p>') +
-        '<div class="acts">' + (open.length ? (repo ? '<button type="button" class="btn solid" data-a="send">' + (done.length && open.length < flags.length && sessionSent() ? 'Send next part' : 'Send ' + open.length + ' to Claude') + '</button>' : '') + '<button type="button" class="btn" data-a="copy">Copy as text</button>' : '') +
-        (done.length ? '<button type="button" class="skip" data-a="resend">Send ' + done.length + ' sent again</button><button type="button" class="skip" data-a="clear">Clear ' + done.length + ' sent</button>' : '') + '</div>' +
-        (open.length ? '<p class="wt2">' + (repo ? '“Send” opens a GitHub issue with these flags filled in; press <b>Submit new issue</b> there (sign in to GitHub first). Then tell Claude in the “website design ideas” chat to check your flags.' : 'Copy the list and paste it into the “website design ideas” chat.') + '</p>' : '');
+        '<div class="acts">' + (open.length ? '<button type="button" class="btn solid" data-a="copy">Copy ' + open.length + ' for Claude</button>' : '') +
+        (done.length ? '<button type="button" class="skip" data-a="recopy">Copy ' + done.length + ' already sent</button><button type="button" class="skip" data-a="clear">Clear ' + done.length + ' sent</button>' : '') + '</div>' +
+        (open.length ? '<p class="wt2">Copies the list; paste it into the “website design ideas” chat with Claude.</p>' : '');
       document.body.appendChild(p);
       p.addEventListener('click', function (e) {
         var t = e.target;
         if (t.closest('.dg-x')) { p.remove(); return; }
         if (t.dataset.del) { flags = flags.filter(function (f) { return f.id !== t.dataset.del; }); saveF(); pinAll(); p.remove(); panel(); return; }
         var a = t.dataset.a; if (!a) return;
-        if (a === 'copy') { var txt = 'Website edits I flagged:\n' + asText(open); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () { t.textContent = 'Copied'; }, function () { window.prompt('Copy this:', txt); }); }
+        if (a === 'copy' || a === 'recopy') {
+          var list = a === 'copy' ? open : done, txt = 'Website edits I flagged:\n' + asText(list);
+          var mark = function () { if (a === 'copy') { list.forEach(function (f) { f.sent = Date.now(); }); saveF(); pinAll(); } t.textContent = 'Copied – now paste it into the chat'; t.disabled = true; };
+          (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(mark, function () { window.prompt('Copy this, then paste it into the chat:', txt); mark(); });
+        }
         if (a === 'send') {
           // a pre-filled GitHub issue link can only hold so much text, so big lists go in parts (one issue per click)
           var head = 'Flagged on the MD3012 notes site by ' + USER.name + '. Claude: list these in the chat, ask before changing anything, then close this issue when done.\n\n';
