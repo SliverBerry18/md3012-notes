@@ -128,3 +128,12 @@ li.step .tag,li.step .said,li.step .annot{text-indent:0}
 /* round1: keep LO-map jump links ("⑥ → p.7") on one line */
 table a{white-space:nowrap}table a::after{content:"\a0p." target-counter(attr(href),page)}
 .aside{display:block;font-size:9pt;color:#6b6b6b;font-style:italic;margin:1mm 0 .3mm;padding-left:2mm;border-left:1.5mm solid #ddd}
+/* definition boxes + case boxes (2026-10-14) */
+.defs{display:flex;flex-wrap:wrap;gap:2mm;margin:2mm 0 2.5mm;column-span:all}
+.defs::before{content:"Definitions";flex:0 0 100%;font:13pt "Patrick Hand","NSSym";color:var(--txt);margin-bottom:-1mm}
+.defs p{margin:0;background:#fff;border:1.4px solid var(--fill);border-left:2.4mm solid var(--txt);border-radius:4px 12px 12px 4px;padding:1.8mm 3mm;break-inside:avoid;line-height:1.35;flex:1 1 40%;box-sizing:border-box}
+.defs .term{display:block;font:13.5pt/1.1 "Patrick Hand","NSMath","NSSym";color:var(--txt);margin-bottom:.6mm}
+.case{background:#fff;border:1.5px dashed var(--txt);border-radius:12px;padding:2mm 3.5mm 2.5mm;margin:2.5mm 0;break-inside:avoid}
+.case table{margin-top:1mm;width:100%}
+@media screen and (max-width:640px){.defs p{flex-basis:100%}}
+li a[href]{color:var(--txt);text-decoration:underline;text-underline-offset:2px}
