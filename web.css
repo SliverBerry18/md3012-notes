@@ -607,3 +607,16 @@ body.flagging,body.flagging *{cursor:crosshair!important}
 
 /* admin-only sections (temporary): hide their links for members */
 body.member a[href$="practice.html"],body.member a[href$="images.html"],body.member a[href$="quiz.html"]{display:none!important}
+
+/* margin doodles (2026-10-14): logo mark, ECG line under the top bar, subject icons on the board */
+.bar .home{display:inline-flex;align-items:center;gap:7px}
+.bar .home .logo{width:28px;height:28px;color:#B83260;flex:none}
+.bar::after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:14px;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='14' viewBox='0 0 240 14'%3E%3Cpath d='M0 9h70l4-4 4 4h8l4-8 5 12 4-4h141' fill='none' stroke='%23B83260' stroke-opacity='.45' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") repeat-x left center}
+[data-theme="dark"] .bar .home .logo{color:#F49CB8}
+.mod h2{align-items:center}
+.mod h2 .hi{width:38px;height:38px;color:var(--txt);flex:none}
+.cell .wm{position:absolute;right:-10px;bottom:-12px;width:64px;height:64px;color:var(--txt);opacity:.13;z-index:-1;pointer-events:none}
+.cell.done .wm{opacity:.2}
+@media (max-width:640px){.bar::after{display:none}.bar{border-bottom-width:2px}.mod h2 .hi{width:30px;height:30px}.bar .home .logo{width:24px;height:24px}}
+@media print{.cell .wm,.bar::after{display:none}}
