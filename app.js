@@ -44,6 +44,60 @@
     el.textContent = total ? n + ' of ' + total + ' revised' : '';
   });
 
+  // ---- verified weeks (2026-10-16): the admin ticks a week once they've checked the notes; everyone sees the ✓.
+  // Shared via the Google Apps Script (GET ?list=verified); the admin's toggle is signed with the admin-only token.
+  (function () {
+    var VU = window.MD3012_USER || (location.protocol === 'file:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? { name: 'admin', role: 'admin', local: true } : null);
+    var isAdmin = VU && VU.role === 'admin';
+    var API = (window.MD3012_AUTH && window.MD3012_AUTH.log) || '';
+    var cells = document.querySelectorAll('.cell[data-key]'), wkKey = document.body.dataset.key || '';
+    var badge = document.querySelector('.wk-actions');
+    if (!cells.length && !(wkKey && badge)) return;
+    var V = lsGet('md3012:verified', {});
+    var fmt = function (ts) { try { return new Date(ts).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); } catch (e) { return ''; } };
+    var paint = function () {
+      cells.forEach(function (c) {
+        var k = c.dataset.key, on = !!V[k], b = c.querySelector('.vf');
+        if (!b && (on || isAdmin)) {
+          b = document.createElement(isAdmin ? 'button' : 'span'); b.className = 'vf'; b.setAttribute('data-ui', '1');
+          if (isAdmin) { b.type = 'button'; b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); toggle(k); }); }
+          c.appendChild(b);
+        }
+        if (!b) return;
+        if (!on && !isAdmin) { b.remove(); return; }
+        b.classList.toggle('on', on);
+        b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 12.5l3.2 3.2L17 9"/></svg>';
+        var label = on ? 'Verified by the admin' + (V[k].at ? ' on ' + fmt(V[k].at) : '') : 'Not verified yet';
+        b.title = label + (isAdmin ? ' (tap to ' + (on ? 'remove' : 'mark verified') + ')' : '');
+        b.setAttribute('aria-label', b.title);
+        if (isAdmin) b.setAttribute('aria-pressed', String(on));
+      });
+      if (wkKey && badge) {
+        var vb = document.querySelector('.wk-verified');
+        if (V[wkKey] && !vb) { vb = document.createElement('span'); vb.className = 'wk-verified'; vb.setAttribute('data-ui', '1'); badge.appendChild(vb); }
+        if (vb) { if (V[wkKey]) vb.textContent = '✓ Verified' + (V[wkKey].at ? ' ' + fmt(V[wkKey].at) : ''); else vb.remove(); }
+      }
+    };
+    var toggle = function (k) {
+      var on = !V[k];
+      if (on) V[k] = { at: Date.now() }; else delete V[k];
+      lsSet('md3012:verified', V); paint();
+      if (API && VU && VU.t) {
+        try { fetch(API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ type: 'verify', key: k, on: on, t: VU.t, name: VU.name }) }); } catch (e) {}
+      } else if (API && !VU.local) {
+        alert('Sign out and back in once so this device can save verified ticks for everyone.');
+      }
+    };
+    paint();
+    if (API) {
+      fetch(API + (API.indexOf('?') < 0 ? '?' : '&') + 'list=verified', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d || typeof d !== 'object' || !d.verified) return;
+        V = d.verified; lsSet('md3012:verified', V); paint();
+      }).catch(function () {});
+    }
+  })();
+
   // ---- week page: tick button
   var tick = document.querySelector('.tick');
   if (tick) {
@@ -855,45 +909,219 @@
     });
   }
 
-  // ---- image rounds
-  var iroot = document.getElementById('images');
-  if (iroot) {
-    var IR = [], ist = lsGet('md3012:img', {}), imods = {}, irecent = [], isess = { n: 0, ok: 0 }, icur = null, ians = false;
-    var icard = iroot.querySelector('.ir-card'), iimg = icard.querySelector('.ir-img img'), iopts = icard.querySelector('.opts'), ifb = icard.querySelector('.fb'), inext = icard.querySelector('[data-act=next]'), istat = iroot.querySelector('.qstats');
-    var ipool = function () { var any = Object.keys(imods).some(function (m) { return imods[m]; }); return IR.filter(function (q) { return !any || imods[q.m]; }); };
-    var inextQ = function () {
-      var all = ipool(), p = all.filter(function (q) { return irecent.indexOf(q.img) < 0; }); if (!p.length) p = all;
-      if (!p.length) { icard.hidden = true; return; }
-      icard.hidden = false;
-      var tot = 0, ws = p.map(function (q) { var s = ist[q.img], w = !s ? 2 : (s[3] === 0 ? 5 : 1 / (1 + s[0])); tot += w; return w; }), r = Math.random() * tot, i = 0;
-      for (; i < p.length - 1; i++) { r -= ws[i]; if (r <= 0) break; }
-      icur = p[i]; irecent.push(icur.img); if (irecent.length > 15) irecent.shift(); ians = false;
-      icard.className = 'qcard ir-card m-' + icur.m;
-      iimg.src = base + icur.img;
-      iopts.innerHTML = icur.o.map(function (o, k) { return '<li><button type="button" class="opt" data-k="' + k + '"><span class="ol">' + 'ABCDE'[k] + '</span><span class="ot">' + escH(o) + '</span></button></li>'; }).join('');
-      ifb.hidden = true; inext.hidden = true;
-      istat.textContent = all.length + ' images in this set · this session: ' + isess.n + ' answered, ' + isess.ok + ' correct';
+  // ---- image rounds 2.0: subject decks with Anki-style spaced repetition (2026-10-15)
+  var rroot = document.getElementById('images');
+  if (rroot) {
+    var R = null, SRS = lsGet('md3012:srs', {}), rbody = rroot.querySelector('.rbody'), rtabs = rroot.querySelectorAll('.rtab');
+    var MIN = 60000, DAY = 86400000, NEW_PER_SESSION = 20;
+    var saveSRS = function () { lsSet('md3012:srs', SRS); };
+    var st = function (id) { return SRS[id] || null; };      // [interval days, ease, due ms, reps, lapses]
+    var isDue = function (id) { var s = st(id); return s && s[2] <= Date.now(); };
+    var isNew = function (id) { return !st(id); };
+    var known = function (id) { var s = st(id); return s && s[0] >= 1; };
+    var nextState = function (id, g) {   // g: 0 again, 1 hard, 2 good, 3 easy
+      var s = (st(id) || [0, 2.5, 0, 0, 0]).slice(), ivl = s[0], ease = s[1], now = Date.now(), wait;
+      if (ivl < 1) {                       // new or learning
+        if (g === 0) { ivl = 0; wait = MIN; } else if (g === 1) { ivl = 0; wait = 6 * MIN; }
+        else if (g === 2) { ivl = 1; wait = DAY; } else { ivl = 4; wait = 4 * DAY; }
+      } else {
+        if (g === 0) { s[4]++; ease = Math.max(1.3, ease - 0.2); ivl = 0; wait = 10 * MIN; }
+        else if (g === 1) { ease = Math.max(1.3, ease - 0.15); ivl = Math.max(1, ivl * 1.2); wait = ivl * DAY; }
+        else if (g === 2) { ivl = ivl * ease; wait = ivl * DAY; }
+        else { ease += 0.15; ivl = ivl * ease * 1.3; wait = ivl * DAY; }
+      }
+      ivl = Math.round(ivl * 10) / 10;
+      return [ivl, Math.round(ease * 100) / 100, now + wait, s[3] + 1, s[4]];
     };
-    iopts.addEventListener('click', function (e) {
-      var b = e.target.closest('.opt'); if (!b || ians) return; ians = true;
-      var k = +b.dataset.k, ok = k === icur.c;
-      iopts.querySelectorAll('.opt').forEach(function (x) { x.disabled = true; if (+x.dataset.k === icur.c) x.classList.add('right'); else if (x === b) x.classList.add('wrong'); });
-      var s = ist[icur.img] || [0, 0, 0, 1]; if (ok) s[0]++; else s[1]++; s[2] = Date.now(); s[3] = ok ? 1 : 0; ist[icur.img] = s; lsSet('md3012:img', ist);
-      isess.n++; if (ok) isess.ok++; logAct('q', 1);
-      ifb.className = 'fb ' + (ok ? 'yes' : 'no');
-      ifb.innerHTML = '<p class="verdict">' + (ok ? 'Correct.' : 'Not quite: it’s from “' + escH(icur.o[icur.c]) + '”.') + '</p>' +
-        (icur.cap ? '<p>Caption: ' + escH(icur.cap) + '</p>' : '') + '<a class="from" href="' + base + icur.u + '">' + escH(label(icur) + ': ' + icur.wt) + ', see it in the notes</a>';
-      ifb.hidden = false; inext.hidden = false; inext.focus({ preventScroll: true });
-    });
-    inext.addEventListener('click', inextQ); icard.querySelector('[data-act=skip]').addEventListener('click', inextQ);
-    iimg.addEventListener('click', function () { var z = document.querySelector('.zoom'); if (z) { z.querySelector('img').src = iimg.src; z.hidden = false; body.classList.add('zoomed'); } });
-    iroot.querySelectorAll('[data-mod]').forEach(function (b) { b.addEventListener('click', function () { imods[b.dataset.mod] = !imods[b.dataset.mod]; b.setAttribute('aria-pressed', String(!!imods[b.dataset.mod])); irecent = []; inextQ(); }); });
-    document.addEventListener('keydown', function (e) {
-      if (!icur || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
-      var k = 'abcde'.indexOf(e.key.toLowerCase()); if (k < 0) k = '12345'.indexOf(e.key);
-      if (!ians && k > -1) { var o = iopts.querySelector('[data-k="' + k + '"]'); if (o) o.click(); } else if (ians && e.key === 'Enter') inextQ();
-    });
-    loadData('images').then(function (d) { IR = d; inextQ(); });
+    var fmtWait = function (ms) {
+      var m = ms / MIN; if (m < 60) return Math.max(1, Math.round(m)) + ' min';
+      var d = ms / DAY; if (d < 1) return Math.round(m / 60) + ' h';
+      if (d < 31) return Math.round(d) + (Math.round(d) === 1 ? ' day' : ' days');
+      return Math.round(d / 30) + ' mo';
+    };
+    var counts = function (cards) {
+      var n = 0, d = 0, k = 0; cards.forEach(function (c) { if (isNew(c.id)) n++; else if (isDue(c.id)) d++; if (known(c.id)) k++; });
+      return { n: n, d: d, k: k, t: cards.length };
+    };
+    var statLine = function (c) {
+      return '<span class="rs-due">' + c.d + ' due</span> · <span class="rs-new">' + c.n + ' new</span> · ' + c.k + ' of ' + c.t + ' learned';
+    };
+
+    // ---- the study panel (shared by EM cases and SSS)
+    var study = function (host, cards, opts) {
+      opts = opts || {};
+      var queue;
+      if (opts.all) queue = cards.slice();
+      else {
+        var due = cards.filter(function (c) { return isDue(c.id); }).sort(function (a, b) { return st(a.id)[2] - st(b.id)[2]; });
+        var fresh = cards.filter(function (c) { return isNew(c.id); }).slice(0, NEW_PER_SESSION);
+        queue = due.concat(fresh);
+      }
+      var done = 0, again = 0, cur = null, shown = false, total = queue.length;
+      var box = ui('div', 'srs'); host.innerHTML = ''; host.appendChild(box);
+      var keyH = function (e) {
+        if (!document.body.contains(box)) { document.removeEventListener('keydown', keyH); return; }
+        if (e.target.closest && e.target.closest('input,textarea')) return;
+        if (!shown && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); reveal(); }
+        else if (shown && /^[1-4]$/.test(e.key)) { e.preventDefault(); rate(+e.key - 1); }
+      };
+      document.addEventListener('keydown', keyH);
+      var finish = function () {
+        box.innerHTML = '<div class="srs-done"><p class="srs-big">' + (total ? 'Session done' : 'Nothing due right now') + '</p>' +
+          '<p>' + (total ? done + ' reviews' + (again ? ', ' + again + ' marked “Again”' : '') + '.' : 'Every card here is scheduled for later.') + ' ' +
+          (opts.after || '') + '</p><div class="acts">' +
+          (opts.onAll ? '<button class="btn" type="button" data-s="all">Review all ' + cards.length + ' cards anyway</button>' : '') +
+          (opts.onClose ? '<button class="btn solid" type="button" data-s="close">' + (opts.closeLabel || 'Done') + '</button>' : '') + '</div></div>';
+        box.querySelector('[data-s=all]') && box.querySelector('[data-s=all]').addEventListener('click', function () { study(host, cards, Object.assign({}, opts, { all: true })); });
+        box.querySelector('[data-s=close]') && box.querySelector('[data-s=close]').addEventListener('click', opts.onClose);
+      };
+      var show = function () {
+        if (!queue.length) { finish(); return; }
+        cur = queue.shift(); shown = false;
+        var left = queue.length + 1;
+        box.innerHTML = '<div class="srs-top"><span>' + left + ' left</span><span class="srs-bar"><i style="width:' + Math.round(100 * done / Math.max(1, done + left)) + '%"></i></span>' +
+          (opts.label ? '<span class="srs-lab">' + escH(opts.label(cur)) + '</span>' : '') + '</div>' +
+          '<div class="srs-card"><div class="srs-front">' + (cur.img ? '<img src="' + base + cur.img + '" alt="Image to identify" class="srs-img">' : '') +
+          '<p>' + escH(cur.f) + '</p></div><div class="srs-back" hidden><p>' + escH(cur.b) + '</p>' +
+          (cur.u ? '<a class="srs-link" href="' + base + cur.u + '">Read it in the notes</a>' : '') + '</div></div>' +
+          '<div class="srs-acts"><button class="btn solid srs-show" type="button">Show answer <kbd>space</kbd></button>' +
+          '<div class="srs-rate" hidden>' + ['Again', 'Hard', 'Good', 'Easy'].map(function (l, g) {
+            var ns = nextState(cur.id, g);
+            return '<button type="button" class="rate r' + g + '" data-g="' + g + '"><b>' + l + '</b><small>' + fmtWait(ns[2] - Date.now()) + '</small></button>';
+          }).join('') + '</div></div>';
+        box.querySelector('.srs-show').addEventListener('click', reveal);
+        box.querySelectorAll('.rate').forEach(function (b) { b.addEventListener('click', function () { rate(+b.dataset.g); }); });
+      };
+      var reveal = function () {
+        if (shown || !cur) return; shown = true;
+        box.querySelector('.srs-back').hidden = false; box.querySelector('.srs-show').hidden = true; box.querySelector('.srs-rate').hidden = false;
+        box.querySelector('.srs-rate .r2').focus({ preventScroll: true });
+      };
+      var rate = function (g) {
+        if (!shown || !cur) return;
+        SRS[cur.id] = nextState(cur.id, g); saveSRS(); done++;
+        if (g === 0) { again++; queue.splice(Math.min(3, queue.length), 0, cur); }
+        else if (g === 1 && SRS[cur.id][0] < 1) queue.splice(Math.min(6, queue.length), 0, cur);
+        if (opts.onRate) opts.onRate();
+        show();
+      };
+      show();
+    };
+
+    // ---- EM: EPIC cards
+    var caseCards = function (c) { return c.q.map(function (x) { return { id: x[0], f: x[1], b: x[2], u: c.u, cs: c }; }); };
+    var allEpic = function () { var a = []; R.epic.forEach(function (c) { a = a.concat(caseCards(c)); }); return a; };
+    var showEM = function () {
+      var weeks = {}; R.epic.forEach(function (c) { (weeks[c.w] = weeks[c.w] || { t: c.wt, cs: [] }).cs.push(c); });
+      var all = allEpic(), ct = counts(all), spoil = lsGet('md3012:rspoil', false);
+      rbody.innerHTML = '<div class="r-head"><div><h2>EPIC cards</h2><p class="r-stat">' + R.epic.length + ' cases · ' + statLine(ct) + '</p></div>' +
+        '<div class="acts"><button class="btn solid" type="button" data-r="study">Study due cards</button>' +
+        '<label class="r-spoil"><input type="checkbox"' + (spoil ? ' checked' : '') + '> Show diagnoses on the cards</label></div></div>' +
+        '<div class="r-study" hidden></div>' +
+        Object.keys(weeks).sort(function (a, b) { return a - b; }).map(function (w) {
+          return '<section class="r-week"><h3>Week ' + w + '<span>' + escH(weeks[w].t) + '</span></h3><div class="r-cases">' +
+            weeks[w].cs.map(function (c) {
+              var cc = counts(caseCards(c));
+              return '<button type="button" class="r-case" data-id="' + c.id + '"><span class="r-name">' + escH(c.n) + '</span>' +
+                '<span class="r-dx"' + (spoil ? '' : ' hidden') + '>' + escH(c.dx) + '</span>' +
+                '<span class="r-meta">' + cc.t + (cc.t === 1 ? ' card' : ' cards') + (cc.d ? ' · <b>' + cc.d + ' due</b>' : '') + '</span>' +
+                '<span class="r-mast"><i style="width:' + Math.round(100 * cc.k / cc.t) + '%"></i></span></button>';
+            }).join('') + '</div></section>';
+        }).join('');
+      rbody.querySelector('.r-spoil input').addEventListener('change', function (e) {
+        lsSet('md3012:rspoil', e.target.checked); rbody.querySelectorAll('.r-dx').forEach(function (d) { d.hidden = !e.target.checked; });
+      });
+      rbody.querySelector('[data-r=study]').addEventListener('click', function () {
+        var host = rbody.querySelector('.r-study'); host.hidden = false;
+        study(host, all, { label: function (c) { return c.cs.n + ' · Week ' + c.cs.w; }, onClose: showEM, closeLabel: 'Back to the cases' });
+        host.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      });
+      rbody.querySelectorAll('.r-case').forEach(function (b) { b.addEventListener('click', function () { location.hash = 'case=' + b.dataset.id; }); });
+    };
+    var showCase = function (id) {
+      var c = R.epic.filter(function (x) { return x.id === id; })[0]; if (!c) { showEM(); return; }
+      var cards = caseCards(c), cc = counts(cards);
+      rbody.innerHTML = '<div class="r-case-view"><a class="r-back" href="#em">← All EPIC cases</a>' +
+        '<h2>' + escH(c.n) + '<span>Week ' + c.w + ' · ' + escH(c.wt) + '</span></h2>' +
+        '<figure class="r-card"><img src="' + base + c.img + '" alt="EPIC card for ' + escH(c.n) + '"><figcaption>Work it out from the card, then reveal the diagnosis.</figcaption></figure>' +
+        '<div class="acts"><button class="btn solid" type="button" data-r="dx">Show diagnosis</button></div>' +
+        '<div class="r-ans" hidden><p class="r-dxbig">' + escH(c.dx) + '</p><figure class="r-card"><img src="' + base + c.ans + '" alt="Diagnosis card for ' + escH(c.n) + '"></figure>' +
+        (c.u ? '<p><a href="' + base + c.u + '">Read Week ' + c.w + ' in the notes</a></p>' : '') + '</div>' +
+        '<h3 class="r-fc">Flashcards for ' + escH(c.n) + ' <small>' + statLine(cc) + '</small></h3><div class="r-study"></div></div>';
+      rbody.querySelector('[data-r=dx]').addEventListener('click', function (e) { rbody.querySelector('.r-ans').hidden = false; e.target.closest('.acts').hidden = true; });
+      var host = rbody.querySelector('.r-study');
+      var startCase = function () {
+        study(host, cards, { all: true, after: '', onClose: function () { location.hash = 'em'; }, closeLabel: 'Back to all cases' });
+      };
+      host.innerHTML = '<div class="acts"><button class="btn solid" type="button">Study the ' + cards.length + ' cards for this case</button></div>';
+      host.querySelector('button').addEventListener('click', startCase);
+      window.scrollTo(0, rroot.offsetTop - 70);
+    };
+
+    // ---- SSS: condition flashcards + photo cards
+    var showSSS = function () {
+      var wsel = lsGet('md3012:rsssw', 0), mode = R.sssimg.length ? lsGet('md3012:rsssm', 'cond') : 'cond';
+      var weeks = []; R.sss.forEach(function (c) { if (weeks.indexOf(c.w) < 0) weeks.push(c.w); }); R.sssimg.forEach(function (p) { if (weeks.indexOf(p.w) < 0) weeks.push(p.w); });
+      weeks.sort(function (a, b) { return a - b; });
+      var condCards = function () {
+        var a = []; R.sss.forEach(function (c) { if (!wsel || c.w === wsel) c.q.forEach(function (x) { a.push({ id: x[0], f: x[1], b: x[2], u: c.u, c: c }); }); }); return a;
+      };
+      var photoCards = function () {
+        return R.sssimg.filter(function (p) { return !wsel || p.w === wsel; }).map(function (p) {
+          return { id: p.id, img: p.img, f: 'What does this show?', b: p.cap + (p.sec ? ' (' + p.sec.replace(/^[①-⑳\s]+/, '') + ')' : ''), u: p.u, c: { c: p.sec, w: p.w } };
+        });
+      };
+      var render = function () {
+        var cards = mode === 'cond' ? condCards() : photoCards(), ct = counts(cards);
+        var conds = R.sss.filter(function (c) { return !wsel || c.w === wsel; });
+        rbody.innerHTML = '<div class="r-head"><div><h2>' + (mode === 'cond' ? 'Condition flashcards' : 'Photo cards') + '</h2><p class="r-stat">' +
+          (mode === 'cond' ? conds.length + ' conditions · ' : cards.length + ' images · ') + statLine(ct) + '</p></div>' +
+          '<div class="acts"><button class="btn solid" type="button" data-r="study">Study due cards</button></div></div>' +
+          (R.sssimg.length ? '<div class="chips" role="group" aria-label="Card type"><button class="chip" type="button" data-m="cond" aria-pressed="' + (mode === 'cond') + '">Conditions</button>' +
+          '<button class="chip" type="button" data-m="photo" aria-pressed="' + (mode === 'photo') + '">Photos from the notes</button></div>' : '') +
+          '<div class="chips" role="group" aria-label="Week"><button class="chip" type="button" data-w="0" aria-pressed="' + (!wsel) + '">All weeks</button>' +
+          weeks.map(function (w) { return '<button class="chip" type="button" data-w="' + w + '" aria-pressed="' + (wsel === w) + '">Week ' + w + '</button>'; }).join('') + '</div>' +
+          '<div class="r-study" hidden></div>' +
+          (mode === 'cond' ? '<div class="r-conds">' + conds.map(function (c) {
+            var cc = counts(c.q.map(function (x) { return { id: x[0] }; }));
+            return '<button type="button" class="r-cond" data-id="' + c.id + '"><span class="r-name">' + escH(c.c) + '</span><span class="r-meta">Week ' + c.w + ' · ' + cc.t + (cc.t === 1 ? ' card' : ' cards') + (cc.d ? ' · <b>' + cc.d + ' due</b>' : '') + '</span>' +
+              '<span class="r-mast"><i style="width:' + Math.round(100 * cc.k / cc.t) + '%"></i></span></button>';
+          }).join('') + '</div>' : '');
+        rbody.querySelectorAll('[data-m]').forEach(function (b) { b.addEventListener('click', function () { mode = b.dataset.m; lsSet('md3012:rsssm', mode); render(); }); });
+        rbody.querySelectorAll('[data-w]').forEach(function (b) { b.addEventListener('click', function () { wsel = +b.dataset.w; lsSet('md3012:rsssw', wsel); render(); }); });
+        var host = rbody.querySelector('.r-study');
+        var go = function (list, all, label) {
+          host.hidden = false;
+          study(host, list, { all: all, label: function (c) { return c.c && c.c.c ? c.c.c : ''; }, onClose: render, closeLabel: 'Back to the list' });
+          host.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        };
+        rbody.querySelector('[data-r=study]').addEventListener('click', function () { go(cards, false); });
+        rbody.querySelectorAll('.r-cond').forEach(function (b) {
+          b.addEventListener('click', function () {
+            var c = R.sss.filter(function (x) { return x.id === b.dataset.id; })[0];
+            go(c.q.map(function (x) { return { id: x[0], f: x[1], b: x[2], u: c.u, c: c }; }), true);
+          });
+        });
+      };
+      render();
+    };
+
+    // ---- tabs + routing (#em, #sss, #case=<id>)
+    var pick = function (sub) {
+      rtabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.sub === sub)); });
+      lsSet('md3012:rtab', sub);
+      if (sub === 'SSS') showSSS(); else showEM();
+    };
+    rtabs.forEach(function (t) { t.addEventListener('click', function () { if (!t.disabled) location.hash = t.dataset.sub.toLowerCase(); }); });
+    var route = function () {
+      if (!R) return;
+      var h = decodeURIComponent(location.hash.slice(1));
+      if (h.indexOf('case=') === 0) { rtabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.sub === 'EM')); }); showCase(h.slice(5)); return; }
+      if (h === 'sss') pick('SSS'); else if (h === 'em') pick('EM'); else pick(lsGet('md3012:rtab', 'EM') === 'SSS' ? 'SSS' : 'EM');
+    };
+    window.addEventListener('hashchange', route);
+    rbody.innerHTML = '<p class="qempty">Loading the decks…</p>';
+    loadData('rounds').then(function (d) { R = d; route(); }, function () { rbody.innerHTML = '<p class="qempty">The decks could not be loaded. Reload the page to try again.</p>'; });
   }
 
   // ---- My notes page
@@ -1031,8 +1259,8 @@
       // other
       var os = lsGet('md3012:osce', {}), osk = Object.keys(os), hlc = 0, hlx = lsGet('md3012:hl', {});
       Object.keys(hlx).forEach(function (k) { hlc += hlx[k].length; });
-      var img = lsGet('md3012:img', {}), ir = 0, iw = 0; Object.keys(img).forEach(function (k) { ir += img[k][0]; iw += img[k][1]; });
-      h += '<section class="pcard"><h2>Also</h2><p class="prow"><span class="pl">Image rounds</span><span class="pval">' + (ir + iw ? Math.round(100 * ir / (ir + iw)) + '% of ' + (ir + iw) : 'not started') + '</span></p>' +
+      var srs = lsGet('md3012:srs', {}), sk = Object.keys(srs), sl = sk.filter(function (k) { return srs[k][0] >= 1; }).length, sd = sk.filter(function (k) { return srs[k][2] <= Date.now(); }).length;
+      h += '<section class="pcard"><h2>Also</h2><p class="prow"><span class="pl">Flashcards (image rounds)</span><span class="pval">' + (sk.length ? '<a href="images.html">' + sl + ' learned of ' + sk.length + ' seen' + (sd ? ' · ' + sd + ' due' : '') + '</a>' : 'not started') + '</span></p>' +
         '<p class="prow"><span class="pl">OSCE stations</span><span class="pval">' + (osk.length ? osk.map(function (k) { var l = os[k][os[k].length - 1]; return escH(k.replace(/ station/i, '')) + ' ' + l.score + '/' + l.total; }).join(', ') : 'not started') + '</span></p>' +
         '<p class="prow"><span class="pl">Highlights</span><span class="pval"><a href="mynotes.html">' + hlc + ' · ' + Object.keys(lsGet('md3012:bm', {})).length + ' bookmarks</a></span></p></section>';
       h += '</div>';

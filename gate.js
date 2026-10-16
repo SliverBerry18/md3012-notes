@@ -41,7 +41,9 @@
       try {
         var kek = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: unb64(k.salt), iterations: A.iter, hash: 'SHA-256' }, base_, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
         var raw = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(k.iv) }, kek, unb64(k.ct));
-        return { raw: new Uint8Array(raw), role: k.role };
+        var t = '';
+        if (k.at) { try { t = td.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(k.iv2) }, kek, unb64(k.at))); } catch (e2) {} }
+        return { raw: new Uint8Array(raw), role: k.role, t: t };
       } catch (e) { /* not this password */ }
     }
     return null;
@@ -106,7 +108,7 @@
     var enc = doc.getElementById('md-enc');
     var raw = await decrypt(unb64(JSON.parse(enc.textContent)));
     var page = JSON.parse(td.decode(raw));
-    window.MD3012_USER = { name: who.name, role: who.role };
+    window.MD3012_USER = { name: who.name, role: who.role, t: who.t || '' };
     var t = doc.createElement('template'); t.innerHTML = page.b;
     // admin-only pages (temporary): members see a "coming soon" note and no links to them
     if (who.role !== 'admin') {
@@ -167,7 +169,7 @@
       var r = await unwrap(pw);
       if (!r) { btn.disabled = false; btn.textContent = 'Open notes'; f.querySelector('.md-err').textContent = 'That password isn’t right. Check it and try again.'; f.password.select(); return; }
       f.password.type = 'password'; key = await crypto.subtle.importKey('raw', r.raw, 'AES-GCM', false, ['decrypt']);
-      var who = { name: name, role: r.role, k: tob64(r.raw), kid: A.kid };
+      var who = { name: name, role: r.role, k: tob64(r.raw), kid: A.kid, t: r.t || '' };
       save(who, f.remember.checked);
       logVisit(who, 'sign-in'); try { localStorage.setItem('md3012:seen', new Date().toDateString()); } catch (e2) {}
       try { await open(who); } catch (err) { showLogin('Something went wrong opening this page. Please reload.'); }
