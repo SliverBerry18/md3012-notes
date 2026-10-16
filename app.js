@@ -1454,6 +1454,15 @@
     who.innerHTML = 'Signed in as <b>' + escH(USER.name) + '</b>' + (USER.role === 'admin' ? ' <span class="who-admin">admin</span>' : '') + '<button type="button" class="skip">Log out</button>';
     who.querySelector('button').addEventListener('click', function () { if (window.MD3012_LOGOUT) window.MD3012_LOGOUT(); });
     menu.appendChild(who);
+    // visible in the top bar too (2026-10-16)
+    var th = document.querySelector('.bar .theme');
+    if (th) {
+      var lo = document.createElement('button'); lo.type = 'button'; lo.className = 'logout'; lo.setAttribute('data-ui', '1');
+      lo.title = 'Signed in as ' + USER.name + (USER.role === 'admin' ? ' (admin)' : '');
+      lo.innerHTML = '<span class="lo-name">' + escH(USER.name) + (USER.role === 'admin' ? ' <i>admin</i>' : '') + '</span><span class="lo-act">Log out</span>';
+      lo.addEventListener('click', function () { if (window.MD3012_LOGOUT) window.MD3012_LOGOUT(); });
+      th.parentNode.insertBefore(lo, th);
+    }
   }
   if (USER && USER.role === 'admin') (function () {
     var FK = 'md3012:flags';

@@ -700,3 +700,11 @@ body.member a[href$="practice.html"],body.member a[href$="images.html"],body.mem
 .wk-verified{display:inline-flex;align-items:center;font:600 13px "Nunito",sans-serif;color:#2E7D32;background:#E3F3E1;border-radius:999px;padding:3px 10px}
 [data-theme="dark"] .cell .vf.on svg circle{fill:#4CAF50;stroke:#4CAF50}
 [data-theme="dark"] .wk-verified{background:#1F3A23;color:#7FD48A}
+
+/* log out button in the top bar (2026-10-16) */
+.bar .logout{display:inline-flex;align-items:center;gap:8px;margin-left:8px;padding:5px 12px;border-radius:999px;border:1.5px solid var(--rule);background:var(--cell);color:var(--ink);font:15px/1.2 var(--hand);cursor:pointer;white-space:nowrap}
+.bar .logout .lo-name{color:var(--muted)}
+.bar .logout i{font:normal 11px "Nunito",sans-serif;padding:0 6px;border-radius:999px;background:var(--hl);color:#2D2D2D}
+.bar .logout .lo-act{color:var(--bad)}
+.bar .logout:hover{border-color:var(--bad)}
+@media (max-width:640px){.bar .logout .lo-name{display:none}.bar .logout{padding:4px 10px;margin-left:4px}}
