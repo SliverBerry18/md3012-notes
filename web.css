@@ -708,3 +708,15 @@ body.member a[href$="practice.html"],body.member a[href$="images.html"],body.mem
 .bar .logout .lo-act{color:var(--bad)}
 .bar .logout:hover{border-color:var(--bad)}
 @media (max-width:640px){.bar .logout .lo-name{display:none}.bar .logout{padding:4px 10px;margin-left:4px}}
+/* patient cases as dropdowns (EM, 2026-10-16) */
+details.case-dd{border:1.5px solid var(--fill);border-left:5px solid var(--txt);border-radius:10px;background:var(--cell);margin:6px 0 10px;break-inside:avoid}
+details.case-dd > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;font:18px/1.25 var(--hand);color:var(--ink)}
+details.case-dd > summary::-webkit-details-marker{display:none}
+details.case-dd > summary::before{content:"▸";color:var(--txt);font-size:16px;transition:transform .15s}
+details.case-dd[open] > summary::before{transform:rotate(90deg)}
+details.case-dd .cd-tag{font:700 11px "Nunito",sans-serif;text-transform:none;color:var(--txt);background:color-mix(in srgb,var(--fill) 55%,transparent);border-radius:999px;padding:2px 8px;white-space:nowrap}
+details.case-dd[open] > summary{border-bottom:1px dashed var(--rule)}
+details.case-dd > :not(summary){margin-left:12px;margin-right:12px}
+details.case-dd > ul{padding-top:6px}
+details.case-dd > table{margin:8px 12px 12px;width:calc(100% - 24px)}
+@media print{details.case-dd > :not(summary){display:block}}
