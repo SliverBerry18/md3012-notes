@@ -137,3 +137,4 @@ table a{white-space:nowrap}table a::after{content:"\a0p." target-counter(attr(hr
 .case table{margin-top:1mm;width:100%}
 @media screen and (max-width:640px){.defs p{flex-basis:100%}}
 li a[href]{color:var(--txt);text-decoration:underline;text-underline-offset:2px}
+.flow.center li{text-align:center}
