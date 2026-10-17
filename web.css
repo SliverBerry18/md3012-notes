@@ -720,3 +720,5 @@ details.case-dd > :not(summary){margin-left:12px;margin-right:12px}
 details.case-dd > ul{padding-top:6px}
 details.case-dd > table{margin:8px 12px 12px;width:calc(100% - 24px)}
 @media print{details.case-dd > :not(summary){display:block}}
+.mn-note{font-size:13px;color:var(--muted);margin:2px 0 8px;line-height:1.4}
+body.testme .mn-card:not(.show) .mn-note{filter:blur(6px);user-select:none}
