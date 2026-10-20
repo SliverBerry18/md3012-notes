@@ -1675,4 +1675,91 @@
   input.addEventListener('focus', function () { get(); if (input.value.trim().length > 1) run(); });
   document.addEventListener('click', function (e) { if (e.target.isConnected && !e.target.closest('.search')) box.hidden = true; });
   input.addEventListener('keydown', function (e) { if (e.key === 'Escape') { box.hidden = true; input.blur(); } });
+  /* >>> condpop */
+  // ---- condition pop-ups (2026-10-21): condition names in the notes open a small card with the key facts
+  (function () {
+    var root = document.querySelector('main.notes');
+    if (!root) return;
+    loadData('condpop').then(function (CP) {
+      if (!CP) return;
+      var ids = Object.keys(CP).filter(function (k) { return k.charAt(0) !== '_' && CP[k].m; });
+      if (!ids.length) return;
+      var parts = ids.map(function (k) { return '(' + CP[k].m.replace(/\((?!\?)/g, '(?:') + ')'; });
+      var re = new RegExp('\\b(?:' + parts.join('|') + ')\\b', 'i');
+      var idOf = function (txt) { for (var i = 0; i < ids.length; i++) if (new RegExp('^(?:' + CP[ids[i]].m + ')$', 'i').test(txt)) return ids[i]; return null; };
+      var SKIP = 'a,button,abbr,h1,.said,.tag,.clab,.qn,.ans,script,style,svg,figure,.cx,[data-ui],input,textarea';
+      // one link per condition per section (not every mention), so the page stays readable
+      var secs = Array.prototype.filter.call(root.querySelectorAll('section.sec'), function (x) { return !x.querySelector('#lomap'); });
+      (secs.length ? secs : [root]).forEach(function (sec) {
+        var done = {}, tw = document.createTreeWalker(sec, NodeFilter.SHOW_TEXT, {
+          acceptNode: function (n) { return n.parentElement && !n.parentElement.closest(SKIP) && re.test(n.nodeValue) ? 1 : 3; } });
+        var list = []; while (tw.nextNode()) list.push(tw.currentNode);
+        list.forEach(function (node) {
+          var m, guard = 0;
+          while (node && (m = re.exec(node.nodeValue)) && guard++ < 6) {
+            var id = idOf(m[0]);
+            if (!id || done[id]) { var rest = node.splitText(m.index + m[0].length); node = rest; continue; }
+            done[id] = 1;
+            var hit = m.index ? node.splitText(m.index) : node, after = hit.splitText(m[0].length);
+            var s = document.createElement('span'); s.className = 'cx'; s.tabIndex = 0; s.setAttribute('role', 'button');
+            s.setAttribute('aria-haspopup', 'dialog'); s.dataset.c = id;
+            hit.parentNode.insertBefore(s, hit); s.appendChild(hit);
+            node = after;
+          }
+        });
+      });
+
+      var pop = null, cur = null, pinned = false, tOpen = 0, tClose = 0;
+      var li = function (arr) { return (arr || []).map(function (t) { var add = t.indexOf('+ ') === 0; return '<li' + (add ? ' class="cx-add" title="Added by Claude from an Australian source, not from your notes"' : '') + '>' + escH(add ? t.slice(2) : t) + '</li>'; }).join(''); };
+      var blk = function (h, arr, cls) { return arr && arr.length ? '<p class="cx-h' + (cls ? ' ' + cls : '') + '">' + h + '</p><ul>' + li(arr) + '</ul>' : ''; };
+      function close() { if (pop) { pop.remove(); pop = null; } if (cur) cur.setAttribute('aria-expanded', 'false'); cur = null; pinned = false; }
+      function open(el, pin) {
+        var c = CP[el.dataset.c]; if (!c) return;
+        if (cur === el) { if (pin) pinned = true; return; }
+        close(); cur = el; pinned = !!pin; el.setAttribute('aria-expanded', 'true');
+        pop = ui('div', 'cx-pop'); pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', c.n);
+        var img = (c.img || [])[0];
+        var hasAdd = JSON.stringify(c).indexOf('"+ ') > -1;
+        pop.innerHTML = '<div class="cx-top"><b class="cx-n">' + escH(c.n) + '</b><button type="button" class="cx-x" aria-label="Close">×</button></div>' +
+          '<p class="cx-d">' + escH(c.d) + '</p>' +
+          (img ? '<figure class="cx-img"><img src="' + base + img[0] + '" alt="' + escH(img[1]) + '" loading="lazy"></figure>' : '') +
+          blk('Key features', c.kf) + blk('Red flags', c.rf, 'cx-rf') + blk('Investigations', c.ix) + blk('First-line management', c.mx) +
+          '<p class="cx-foot">' + (hasAdd ? '<span class="cx-key"><i></i>added from Australian sources</span>' : '') +
+          (c.u ? (pageUrl === c.u.split('#')[0] ? '<a href="#' + c.u.split('#')[1] + '">Go to section →</a>' : '<a href="' + base + c.u + '">Full notes →</a>') : '') + '</p>';
+        document.body.appendChild(pop);
+        place();
+        pop.querySelector('.cx-x').onclick = function () { var e = cur; close(); if (e) e.focus(); };
+        pop.addEventListener('mouseenter', function () { clearTimeout(tClose); });
+        pop.addEventListener('mouseleave', function () { if (!pinned) tClose = setTimeout(close, 220); });
+        var im = pop.querySelector('img'); if (im) im.onload = place;
+      }
+      function place() {
+        if (!pop || !cur) return;
+        var vw = document.documentElement.clientWidth;
+        if (vw < 600) { pop.classList.add('cx-sheet'); pop.style.cssText = ''; return; }  // phones: bottom sheet
+        var r = cur.getBoundingClientRect(), w = Math.min(380, vw - 24);
+        pop.style.width = w + 'px';
+        var left = Math.max(12, Math.min(vw - w - 12, r.left - 12)), h = pop.offsetHeight, below = window.innerHeight - r.bottom;
+        var top = (below < h + 12 && r.top > below) ? r.top - h - 8 : r.bottom + 8;
+        pop.style.left = (left + window.scrollX) + 'px'; pop.style.top = (Math.max(8, top) + window.scrollY) + 'px';
+      }
+      var canHover = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
+      if (canHover) {
+        root.addEventListener('mouseover', function (e) { var el = e.target.closest && e.target.closest('.cx'); if (!el) return; clearTimeout(tClose); clearTimeout(tOpen); tOpen = setTimeout(function () { open(el, false); }, 260); });
+        root.addEventListener('mouseout', function (e) { var el = e.target.closest && e.target.closest('.cx'); if (!el) return; clearTimeout(tOpen); if (!pinned) tClose = setTimeout(close, 220); });
+      }
+      document.addEventListener('click', function (e) {
+        var el = e.target.closest && e.target.closest('.cx');
+        if (el) { e.preventDefault(); if (cur === el && pinned) close(); else open(el, true); return; }
+        if (pop && !pop.contains(e.target)) close();
+      });
+      document.addEventListener('keydown', function (e) {
+        var el = e.target.closest && e.target.closest('.cx');
+        if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(el, true); var b = pop && pop.querySelector('.cx-x'); if (b) b.focus(); }
+        else if (e.key === 'Escape' && pop) { var c = cur; close(); if (c) c.focus(); }
+      });
+      window.addEventListener('resize', function () { if (pop) place(); });
+    }).catch(function () {});
+  })();
+  /* <<< condpop */
 })();

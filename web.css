@@ -722,3 +722,22 @@ details.case-dd > table{margin:8px 12px 12px;width:calc(100% - 24px)}
 @media print{details.case-dd > :not(summary){display:block}}
 .mn-note{font-size:13px;color:var(--muted);margin:2px 0 8px;line-height:1.4}
 body.testme .mn-card:not(.show) .mn-note{filter:blur(6px);user-select:none}
+/* >>> condpop */
+/* condition pop-ups (2026-10-21) */
+.notes .cx{cursor:pointer;border-bottom:2px dotted var(--txt,#B8860B);text-decoration:none;border-radius:2px;transition:background .15s}
+.notes .cx:hover,.notes .cx:focus-visible,.notes .cx[aria-expanded="true"]{background:color-mix(in srgb,var(--fill,var(--hl)) 70%,transparent);outline:none}
+.cx-pop{position:absolute;z-index:72;box-sizing:border-box;max-height:min(72vh,560px);overflow:auto;padding:12px 14px 10px;border-radius:14px;background:var(--card);color:var(--ink);border:1.5px solid var(--rule);box-shadow:0 14px 40px var(--shadow);font-size:14.5px;line-height:1.4}
+.cx-top{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
+.cx-n{font:21px/1.15 var(--hand,"Patrick Hand"),sans-serif;background:linear-gradient(transparent 55%,var(--hl) 55%);padding-right:4px}
+.cx-x{border:0;background:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:0 2px}
+.cx-d{margin:6px 0 8px}
+.cx-img{margin:0 0 8px}.cx-img img{display:block;width:100%;max-height:150px;object-fit:contain;border-radius:8px;background:var(--paper)}
+.cx-h{margin:8px 0 2px;font-weight:700;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.cx-h.cx-rf{color:var(--bad)}
+.cx-pop ul{margin:0;padding-left:18px}.cx-pop li{margin:1px 0}
+.cx-pop li.cx-add,.cx-key i{text-decoration:none;background:color-mix(in srgb,#2563EB 10%,transparent);border-left:3px solid #2563EB;padding-left:5px;list-style-position:outside}
+.cx-key{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:5px}.cx-key i{display:inline-block;width:10px;height:12px;padding:0}
+.cx-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:10px 0 0;font-size:13.5px}
+.cx-foot a{margin-left:auto;font-weight:700}
+.cx-pop.cx-sheet{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;max-height:72vh;border-radius:18px 18px 0 0;border-bottom:0;padding:14px 16px calc(14px + env(safe-area-inset-bottom))}
+/* <<< condpop */
