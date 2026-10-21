@@ -109,6 +109,42 @@
 
   var notes = document.querySelector('main.notes');
 
+  // ---- inline hidden answers (2026-10-21): [text]{.hide} in the notes -> "Show answer" button
+  document.querySelectorAll('.notes .hide').forEach(function (h) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'reveal'; b.textContent = 'Show answer'; b.setAttribute('aria-expanded', 'false'); b.setAttribute('data-ui', '1');
+    h.hidden = true; h.classList.add('hide-on');
+    b.addEventListener('click', function () {
+      h.hidden = !h.hidden; b.textContent = h.hidden ? 'Show answer' : 'Hide answer'; b.setAttribute('aria-expanded', String(!h.hidden));
+    });
+    h.parentNode.insertBefore(b, h);
+  });
+
+  // ---- inline term definitions (2026-10-21): [term]{.def d="..."} -> tap/hover for a small definition card
+  (function () {
+    var tip = null, curD = null;
+    var shut = function () { if (tip) { tip.remove(); tip = null; } if (curD) curD.setAttribute('aria-expanded', 'false'); curD = null; };
+    var show = function (el) {
+      if (curD === el) return; shut(); curD = el; el.setAttribute('aria-expanded', 'true');
+      tip = document.createElement('div'); tip.className = 'def-pop'; tip.setAttribute('role', 'tooltip');
+      tip.innerHTML = '<b></b><p></p>'; tip.firstChild.textContent = el.textContent; tip.lastChild.textContent = el.dataset.d;
+      document.body.appendChild(tip);
+      var r = el.getBoundingClientRect(), vw = document.documentElement.clientWidth, w = Math.min(320, vw - 24);
+      tip.style.width = w + 'px';
+      var top = r.bottom + 6; if (window.innerHeight - r.bottom < tip.offsetHeight + 12 && r.top > tip.offsetHeight + 12) top = r.top - tip.offsetHeight - 6;
+      tip.style.left = (Math.max(12, Math.min(vw - w - 12, r.left - 12)) + window.scrollX) + 'px'; tip.style.top = (top + window.scrollY) + 'px';
+    };
+    document.querySelectorAll('.notes .tdef[data-d]').forEach(function (el) {
+      el.tabIndex = 0; el.setAttribute('role', 'button'); el.setAttribute('aria-expanded', 'false');
+      el.addEventListener('mouseenter', function () { show(el); });
+      el.addEventListener('mouseleave', shut);
+      el.addEventListener('focus', function () { show(el); });
+      el.addEventListener('blur', shut);
+    });
+    document.addEventListener('click', function (e) { var el = e.target.closest && e.target.closest('.tdef[data-d]'); if (el) show(el); else shut(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') shut(); });
+  })();
+
   // ---- week page: interactive self-test
   var st = document.querySelectorAll('.notes .st');
   if (st.length >= 2) {

@@ -770,3 +770,12 @@ body.testme .mn-card:not(.show) .mn-note{filter:blur(6px);user-select:none}
 .topic.cc-e .ccard li{display:list-item;margin:1px 0}
 .topic.cc-e .ccard li::marker{color:var(--txt,var(--muted))}
 /* <<< condpop */
+
+/* inline hidden answers (2026-10-21) */
+.notes .hide.hide-on{display:inline;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--fill) 45%,var(--card))}
+.notes .hide[hidden]{display:none}
+.notes li > .reveal,.notes p > .reveal{display:inline-block;margin:0 4px;font:16px var(--hand);color:var(--txt);background:none;border:0;border-bottom:1.5px dotted var(--txt);cursor:pointer;padding:0}
+/* inline term definitions (2026-10-21) */
+.notes .tdef[data-d]{border-bottom:1.5px dotted currentColor;cursor:help}
+.def-pop{position:absolute;z-index:60;background:var(--card);color:var(--txt);border:1px solid color-mix(in srgb,var(--txt) 18%,transparent);border-radius:10px;padding:8px 12px;box-shadow:0 6px 24px rgba(0,0,0,.18);font-size:14px;line-height:1.4}
+.def-pop b{display:block;margin-bottom:2px}.def-pop p{margin:0}
