@@ -145,6 +145,70 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') shut(); });
   })();
 
+  /* >>> mnpage */
+  // ---- mnemonics page (2026-10-21): subject chips, week + topic filters, search, shuffle
+  (function () {
+    var page = document.querySelector('.mn-tools');
+    if (!page) return;
+    var q = page.querySelector('.mn-q'), wk = page.querySelector('.mn-week'), sys = page.querySelector('.mn-sys');
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.mn-groups .mn-card'));
+    var flat = document.querySelector('.mn-flat'), groups = document.querySelector('.mn-groups'), empty = page.querySelector('.mn-empty');
+    var mod = '', home = cards.map(function (c) { return [c, c.parentNode]; });
+    var weekLabel = function (m, w) { return m === 'CS' ? (w > 10 ? 'MD3011 skill ' + (w - 10) : 'Skill ' + w) : m + ' week ' + w; };
+    var fillWeeks = function () {
+      var seen = {}, opts = '<option value="">All weeks</option>';
+      cards.forEach(function (c) {
+        var k = c.dataset.m + ':' + c.dataset.w;
+        if ((!mod || c.dataset.m === mod) && !seen[k]) { seen[k] = 1; opts += '<option value="' + k + '">' + weekLabel(c.dataset.m, +c.dataset.w) + '</option>'; }
+      });
+      wk.innerHTML = opts;
+    };
+    var apply = function () {
+      var t = q.value.trim().toLowerCase(), w = wk.value, s = sys.value, shown = 0;
+      cards.forEach(function (c) {
+        var ok = (!mod || c.dataset.m === mod) && (!w || c.dataset.m + ':' + c.dataset.w === w) &&
+          (!s || ('|' + c.dataset.s + '|').indexOf('|' + s + '|') > -1) && (!t || c.dataset.k.indexOf(t) > -1);
+        c.hidden = !ok; if (ok) shown++;
+      });
+      document.querySelectorAll('.mn-wk').forEach(function (b) { b.hidden = !b.querySelector('.mn-card:not([hidden])'); });
+      document.querySelectorAll('.mn-mod').forEach(function (b) { b.hidden = !b.querySelector('.mn-card:not([hidden])'); });
+      empty.hidden = shown > 0;
+    };
+    page.querySelectorAll('.mn-chips .chip').forEach(function (b) {
+      b.addEventListener('click', function () {
+        mod = b.dataset.m;
+        page.querySelectorAll('.mn-chips .chip').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        fillWeeks(); apply();
+      });
+    });
+    q.addEventListener('input', apply); wk.addEventListener('change', apply); sys.addEventListener('change', apply);
+    var sh = page.querySelector('[data-shuffle]');
+    sh.addEventListener('click', function () {
+      var on = sh.getAttribute('aria-pressed') !== 'true';
+      sh.setAttribute('aria-pressed', String(on));
+      if (on) {
+        var a = cards.slice();
+        for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; }
+        a.forEach(function (c) { flat.appendChild(c); });
+        flat.hidden = false; groups.hidden = true;
+      } else {
+        home.forEach(function (h) { h[1].appendChild(h[0]); });
+        flat.hidden = true; groups.hidden = false;
+      }
+    });
+    page.querySelectorAll('.mn-az a').forEach(function (a) {
+      a.addEventListener('click', function () {
+        q.value = ''; wk.value = ''; sys.value = ''; mod = '';
+        page.querySelectorAll('.mn-chips .chip').forEach(function (x) { x.setAttribute('aria-pressed', String(!x.dataset.m)); });
+        fillWeeks(); apply();
+        var c = document.querySelector(a.getAttribute('href'));
+        if (c) { c.classList.remove('mn-flash'); void c.offsetWidth; c.classList.add('mn-flash'); }
+      });
+    });
+    fillWeeks();
+  })();
+
+  /* <<< mnpage */
   // ---- week page: interactive self-test
   var st = document.querySelectorAll('.notes .st');
   if (st.length >= 2) {
