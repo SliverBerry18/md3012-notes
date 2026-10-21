@@ -1705,6 +1705,7 @@
           var m, guard = 0;
           while (node && (m = re.exec(node.nodeValue)) && guard++ < 6) {
             var id = idOf(m[0]);
+            if (/non-$/i.test(node.nodeValue.slice(Math.max(0, m.index - 4), m.index))) id = null;  // 'non-melanoma'
             if (!id || done[id]) { var rest = node.splitText(m.index + m[0].length); node = rest; continue; }
             done[id] = 1;
             var hit = m.index ? node.splitText(m.index) : node, after = hit.splitText(m[0].length);
