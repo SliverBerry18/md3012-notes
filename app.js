@@ -1694,20 +1694,19 @@
         for (var i = 0; i < ids.length; i++) { var c = CP[ids[i]];
           if ((c.m && new RegExp('^(?:' + nc(c.m) + ')$', 'i').test(txt)) || (c.ac && new RegExp('^(?:' + nc(c.ac) + ')$').test(txt))) return ids[i]; }
         return null; };
-      var SKIP = 'a,button,abbr,h1,.said,.tag,.clab,.qn,.ans,script,style,svg,figure,.cx,[data-ui],input,textarea';
-      // one link per condition per section (not every mention), so the page stays readable
-      var secs = Array.prototype.filter.call(root.querySelectorAll('section.sec'), function (x) { return !x.querySelector('#lomap'); });
-      (secs.length ? secs : [root]).forEach(function (sec) {
+      var SKIP = 'a,button,abbr,h1,.said,.tag,.clab,script,style,svg,figure,.cx,[data-ui],input,textarea';
+      // every mention is linked (2026-10-21, Arsh: popup available every time it is highlighted)
+      var secs = Array.prototype.slice.call(root.querySelectorAll('section.sec'));
+      [root].forEach(function (sec) {
         var done = {}, tw = document.createTreeWalker(sec, NodeFilter.SHOW_TEXT, {
           acceptNode: function (n) { return n.parentElement && !n.parentElement.closest(SKIP) && re.test(n.nodeValue) ? 1 : 3; } });
         var list = []; while (tw.nextNode()) list.push(tw.currentNode);
         list.forEach(function (node) {
           var m, guard = 0;
-          while (node && (m = re.exec(node.nodeValue)) && guard++ < 6) {
+          while (node && (m = re.exec(node.nodeValue)) && guard++ < 60) {
             var id = idOf(m[0]);
             if (/non-$/i.test(node.nodeValue.slice(Math.max(0, m.index - 4), m.index))) id = null;  // 'non-melanoma'
-            if (!id || done[id]) { var rest = node.splitText(m.index + m[0].length); node = rest; continue; }
-            done[id] = 1;
+            if (!id) { var rest = node.splitText(m.index + m[0].length); node = rest; continue; }
             var hit = m.index ? node.splitText(m.index) : node, after = hit.splitText(m[0].length);
             var s = document.createElement('span'); s.className = 'cx'; s.tabIndex = 0; s.setAttribute('role', 'button');
             s.setAttribute('aria-haspopup', 'dialog'); s.dataset.c = id;
