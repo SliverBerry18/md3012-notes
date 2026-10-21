@@ -1682,11 +1682,18 @@
     if (!root) return;
     loadData('condpop').then(function (CP) {
       if (!CP) return;
-      var ids = Object.keys(CP).filter(function (k) { return k.charAt(0) !== '_' && CP[k].m; });
+      var ids = Object.keys(CP).filter(function (k) { return k.charAt(0) !== '_' && (CP[k].m || CP[k].ac); });
       if (!ids.length) return;
-      var parts = ids.map(function (k) { return '(' + CP[k].m.replace(/\((?!\?)/g, '(?:') + ')'; });
-      var re = new RegExp('\\b(?:' + parts.join('|') + ')\\b', 'i');
-      var idOf = function (txt) { for (var i = 0; i < ids.length; i++) if (new RegExp('^(?:' + CP[ids[i]].m + ')$', 'i').test(txt)) return ids[i]; return null; };
+      var nc = function (p) { return p.replace(/\((?!\?)/g, '(?:'); };
+      var mk = function (key, fl) { var parts = ids.filter(function (k) { return CP[k][key]; }).map(function (k) { return '(?:' + nc(CP[k][key]) + ')'; });
+        return parts.length ? new RegExp('\\b(?:' + parts.join('|') + ')\\b', fl) : null; };
+      var reI = mk('m', 'i'), reC = mk('ac', '');
+      var re = { test: function (t) { return (reI && reI.test(t)) || (reC && reC.test(t)); },
+        exec: function (t) { var a = reI && reI.exec(t), b = reC && reC.exec(t); if (a && b) return a.index <= b.index ? a : b; return a || b; } };
+      var idOf = function (txt) {
+        for (var i = 0; i < ids.length; i++) { var c = CP[ids[i]];
+          if ((c.m && new RegExp('^(?:' + nc(c.m) + ')$', 'i').test(txt)) || (c.ac && new RegExp('^(?:' + nc(c.ac) + ')$').test(txt))) return ids[i]; }
+        return null; };
       var SKIP = 'a,button,abbr,h1,.said,.tag,.clab,.qn,.ans,script,style,svg,figure,.cx,[data-ui],input,textarea';
       // one link per condition per section (not every mention), so the page stays readable
       var secs = Array.prototype.filter.call(root.querySelectorAll('section.sec'), function (x) { return !x.querySelector('#lomap'); });
@@ -1723,7 +1730,7 @@
         pop.innerHTML = '<div class="cx-top"><b class="cx-n">' + escH(c.n) + '</b><button type="button" class="cx-x" aria-label="Close">×</button></div>' +
           '<p class="cx-d">' + escH(c.d) + '</p>' +
           (img ? '<figure class="cx-img"><img src="' + base + img[0] + '" alt="' + escH(img[1]) + '" loading="lazy"></figure>' : '') +
-          blk('Key features', c.kf) + blk('Red flags', c.rf, 'cx-rf') + blk('Investigations', c.ix) + blk('First-line management', c.mx) +
+          blk('Key features', c.kf) + blk('Red flags', c.rf, 'cx-rf') + blk('Investigations', c.ix) + blk('First-line management', (c.mx || []).slice(0, 5)) +
           '<p class="cx-foot">' + (hasAdd ? '<span class="cx-key"><i></i>added from Australian sources</span>' : '') +
           (c.u ? (pageUrl === c.u.split('#')[0] ? '<a href="#' + c.u.split('#')[1] + '">Go to section →</a>' : '<a href="' + base + c.u + '">Full notes →</a>') : '') + '</p>';
         document.body.appendChild(pop);
@@ -1760,6 +1767,42 @@
       });
       window.addEventListener('resize', function () { if (pop) place(); });
     }).catch(function () {});
+  })();
+
+  // ---- conditions page (2026-10-21): flip flashcards, module chips, study mode
+  (function () {
+    var page = document.getElementById('conditions');
+    if (!page || !page.querySelector('.ccard')) return;
+    page.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('.cc-flip');
+      if (!b) return;
+      var card = b.closest('.ccard'), back = card.querySelector('.cc-back'), front = card.querySelector('.cc-front');
+      var toBack = back.hidden;
+      back.hidden = !toBack; front.hidden = toBack; card.classList.toggle('flipped', toBack);
+      var f = (toBack ? back : front).querySelector('.cc-flip'); if (f) f.focus({ preventScroll: true });
+      if (!toBack) card.scrollIntoView({ block: 'nearest' });
+    });
+    var mod = '', tf = page.querySelector('.tfilter');
+    var apply = function () {
+      var q = tf ? tf.value.trim().toLowerCase() : '';
+      page.querySelectorAll('.cc-e').forEach(function (t) {
+        t.hidden = (!!q && t.dataset.k.indexOf(q) < 0) || (!!mod && (' ' + t.dataset.mods + ' ').indexOf(' ' + mod + ' ') < 0);
+      });
+    };
+    if (tf) tf.addEventListener('input', function () { setTimeout(apply, 0); });
+    page.querySelectorAll('.cc-tools .chip').forEach(function (c) {
+      c.addEventListener('click', function () {
+        mod = c.dataset.m;
+        page.querySelectorAll('.cc-tools .chip').forEach(function (x) { x.setAttribute('aria-pressed', String(x === c)); });
+        apply();
+      });
+    });
+    var st = document.getElementById('cc-study');
+    if (st) {
+      try { st.checked = localStorage.getItem('md3012:ccstudy') === '1'; } catch (e) {}
+      var sync = function () { page.classList.toggle('cc-studying', st.checked); try { localStorage.setItem('md3012:ccstudy', st.checked ? '1' : '0'); } catch (e) {} };
+      st.addEventListener('change', sync); sync();
+    }
   })();
   /* <<< condpop */
 })();
