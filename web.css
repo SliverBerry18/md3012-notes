@@ -819,3 +819,6 @@ body.testme .mn-card:not(.show) .mn-note{filter:blur(6px);user-select:none}
 /* trio pairs (2026-10-23) */
 @media (max-width:760px){.notes .pair.trio{grid-template-columns:1fr}}
 [data-theme="dark"] .notes .side.warm{background:#3a2f18}
+/* keep tall X-rays / photos in grids a sensible size (2026-10-23) */
+.notes .s2grid img{max-height:460px;width:auto;max-width:100%;display:block;margin:0 auto}
+.notes .cols3 > .chunk img{max-height:300px;width:auto;max-width:100%;display:block;margin:0 auto}

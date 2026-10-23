@@ -1118,6 +1118,8 @@
         '<div class="acts"><button class="btn solid" type="button" data-r="study">Study due cards</button>' +
         '<label class="r-spoil"><input type="checkbox"' + (spoil ? ' checked' : '') + '> Show diagnoses on the cards</label></div></div>' +
         '<div class="r-study" hidden></div>' +
+        ((R.emxr || []).length ? (function () { var xc = counts(xrCards()); return '<section class="r-week r-xr"><h3>Key exam X-rays<span>' + R.emxr.length + ' films from the MSAT bank · ' + statLine(xc) + '</span></h3>' +
+          '<div class="acts"><button class="btn solid" type="button" data-r="xr">Study the X-rays</button><button class="btn" type="button" data-r="xrall">Go through all ' + R.emxr.length + '</button></div><div class="r-study r-xrstudy" hidden></div></section>'; })() : '') +
         Object.keys(weeks).sort(function (a, b) { return a - b; }).map(function (w) {
           return '<section class="r-week"><h3>Week ' + w + '<span>' + escH(weeks[w].t) + '</span></h3><div class="r-cases">' +
             weeks[w].cs.map(function (c) {
@@ -1137,7 +1139,16 @@
         host.scrollIntoView({ block: 'start', behavior: 'smooth' });
       });
       rbody.querySelectorAll('.r-case').forEach(function (b) { b.addEventListener('click', function () { location.hash = 'case=' + b.dataset.id; }); });
+      ['xr', 'xrall'].forEach(function (k) {
+        var b = rbody.querySelector('[data-r=' + k + ']'); if (!b) return;
+        b.addEventListener('click', function () {
+          var host = rbody.querySelector('.r-xrstudy'); host.hidden = false;
+          study(host, xrCards(), { all: k === 'xrall', label: function (c) { return 'X-ray ' + c.n; }, onClose: showEM, closeLabel: 'Back to EM' });
+          host.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        });
+      });
     };
+    var xrCards = function () { return (R.emxr || []).map(function (x) { return { id: x.id, img: x.img, f: x.f, b: x.b, u: x.u, n: x.n }; }); };
     var showCase = function (id) {
       var c = R.epic.filter(function (x) { return x.id === id; })[0]; if (!c) { showEM(); return; }
       var cards = caseCards(c), cc = counts(cards);
