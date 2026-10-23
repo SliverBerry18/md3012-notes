@@ -147,3 +147,8 @@ li a[href]{color:var(--txt);text-decoration:underline;text-underline-offset:2px}
 /* cap tall images in grids (2026-10-23) */
 .s2grid img{width:auto;max-width:100%;max-height:85mm;display:block;margin:0 auto}
 .cols3 > .chunk img{width:auto;max-width:100%;max-height:55mm;display:block;margin:0 auto}
+/* image rows (2026-10-23) */
+.imgrow{display:flex;flex-wrap:wrap;gap:2mm 3mm;align-items:flex-start;margin:1mm 0 2mm;break-inside:avoid}
+.imgrow > .imc{flex:0 1 auto;max-width:60mm}
+.imgrow > .imc img{max-height:48mm;width:auto;max-width:100%;display:block}
+.imgrow > .imc .cap{font-size:7pt;max-width:50mm}
