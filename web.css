@@ -816,3 +816,6 @@ body.testme .mn-card:not(.show) .mn-note{filter:blur(6px);user-select:none}
 .mn-card.mn-flash{animation:mnflash 1.6s ease}
 @media (min-width:900px){.mn-tools{position:sticky;top:64px;z-index:5}}
 /* <<< mnpage */
+/* trio pairs (2026-10-23) */
+@media (max-width:760px){.notes .pair.trio{grid-template-columns:1fr}}
+[data-theme="dark"] .notes .side.warm{background:#3a2f18}

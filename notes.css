@@ -141,3 +141,6 @@ li a[href]{color:var(--txt);text-decoration:underline;text-underline-offset:2px}
 /* wide vs narrow pulse pressure (2026-10-17): red = warm/vasodilated, blue = cool/vasoconstricted */
 .side.hot{background:#FDECEC;border-left:1.2mm solid #D2453A}.side.hot .lab.sub{color:#B42318}
 .side.cold{background:#E8F1FC;border-left:1.2mm solid #2563EB}.side.cold .lab.sub{color:#1D4ED8}
+/* three coloured boxes in a row + amber side (2026-10-23) */
+.pair.trio{grid-template-columns:1fr 1fr 1fr}
+.side.warm{background:#FFF4DC;border-left:1.2mm solid #D99A1E}.side.warm .lab.sub{color:#9A6400}
