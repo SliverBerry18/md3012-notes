@@ -831,3 +831,34 @@ body.testme .mn-card:not(.show) .mn-note{filter:blur(6px);user-select:none}
 .notes .s2grid .imgrow > .imc:only-child{max-width:100%}
 .notes .s2grid .imgrow > .imc img{max-height:240px}
 .notes .s2grid .imgrow > .imc:only-child img{max-height:320px}
+/* figure cards: text + figure panel (EM9 redesign, option A, 2026-10-23) */
+.notes .figcard{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:18px 20px;margin:16px 0;max-width:none;align-items:start}
+.notes .s2grid.figcard{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:22px}
+.notes .figcard .side{margin:0}
+.notes .figcard .chunk{max-width:none;margin:0}
+.notes .figcard .s2left > :first-child{margin-top:0}
+.notes .figcard .imgrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0;align-items:start}
+.notes .figcard .imgrow > .imc,.notes .s2grid.figcard .imgrow > .imc{max-width:none;min-width:0;display:flex;flex-direction:column;gap:6px}
+.notes .figcard .imgrow > .imc img{width:100%!important;height:230px!important;max-height:230px!important;object-fit:contain;background:#F3EFE4;border-radius:10px;margin:0;padding:4px;box-sizing:border-box}
+.notes .figcard .imgrow > .imc:only-child img{height:330px!important;max-height:330px!important}
+.notes .figcard .imgrow > .imc .cap{font-size:13px;line-height:1.35;margin:0;color:var(--muted);max-width:none;text-align:center}
+/* nerve cards: text on top, image strip below */
+.notes .fc-strip{display:block}
+.notes .fc-strip > .chunk{margin-bottom:12px}
+.notes .fc-strip .imgrow{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+.notes .fc-strip .imgrow > .imc img{height:170px!important;max-height:170px!important}
+/* two cards side by side (Monteggia | Galeazzi) */
+.notes .fcpair{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin:16px 0}
+.notes .fcpair > .figcard{margin:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+[data-theme="dark"] .notes .figcard .imgrow > .imc img{background:#ffffff14}
+@media (max-width:760px){
+ .notes .s2grid.figcard,.notes .fcpair,.notes .fcpair > .figcard{grid-template-columns:1fr}
+ .notes .figcard{padding:14px}
+ .notes .figcard .imgrow{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .notes .figcard .imgrow > .imc img{height:180px!important;max-height:180px!important}
+ .notes .figcard .imgrow > .imc:only-child{grid-column:1/-1}
+ .notes .figcard .imgrow > .imc:only-child img{height:260px!important;max-height:260px!important}
+}
+/* annotated X-rays (_n) need room to read the labels: full width of the panel */
+.notes .figcard .imgrow:has(img[src*="_n."]) > .imc{grid-column:1/-1}
+.notes .figcard .imgrow > .imc:has(img[src*="_n."]) img{height:auto!important;max-height:440px!important}
