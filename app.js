@@ -27,7 +27,7 @@
   paintTheme();
   if (themeBtn) themeBtn.addEventListener('click', function () {
     var next = doc.dataset.theme === 'dark' ? 'light' : 'dark';
-    doc.dataset.theme = next; lsSet('md3012:theme', next); paintTheme();
+    doc.dataset.theme = next; var sys = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; if (next === sys) { try { localStorage.removeItem('md3012:theme'); } catch (e) {} } else lsSet('md3012:theme', next); paintTheme();
   });
   if (window.matchMedia) {
     var mq = matchMedia('(prefers-color-scheme: dark)');
@@ -1700,6 +1700,66 @@
     };
     fab.querySelector('.flag-list').addEventListener('click', panel);
     pinAll();
+  })();
+
+  // ---- report an error (2026-10-24): friends tap the part that looks wrong and say why; it lands in the "Error reports" tab of the sign-in sheet
+  if (USER && USER.role !== 'admin' && (window.MD3012_AUTH || {}).log) (function () {
+    var LOG = window.MD3012_AUTH.log;
+    var segs = location.pathname.split('/'), lastSeg = segs.pop() || 'index.html', dirSeg = segs.pop() || '';
+    var here = body.dataset.url || (/^(tin|em|sss|gh|cs)$/.test(dirSeg) ? dirSeg + '/' + lastSeg : lastSeg);
+    var fab = ui('div', 'flag-fab rep-fab', '<button type="button" class="flag-go">⚑ Report an error</button>');
+    document.body.appendChild(fab);
+    var bar = ui('div', 'flag-bar', 'Tap the part that looks wrong. <button type="button" class="skip" data-a="none">Not one part</button><button type="button" class="skip" data-a="x">Cancel</button>');
+    bar.hidden = true; document.body.appendChild(bar);
+    var picking = false, hov = null;
+    var stop = function () { picking = false; bar.hidden = true; body.classList.remove('flagging'); if (hov) hov.classList.remove('flag-hov'); hov = null; };
+    var dev = function () { var u = navigator.userAgent; return /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1) ? 'iPad' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows' : 'Other'; };
+    var describe = function (el) {
+      var t = (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim();
+      var sec = el.closest('section.sec'), h = sec && sec.querySelector('h1');
+      var KIND = { H1: 'heading', H2: 'sub-heading', LI: 'bullet point', P: 'paragraph', TD: 'table cell', TH: 'table header', TR: 'table row', TABLE: 'table', IMG: 'image' };
+      var kind = el.tagName === 'IMG' ? 'image' : el.closest('figure') ? 'figure' : (KIND[el.tagName] || 'text');
+      return { kind: kind, text: t.slice(0, 280) || (el.getAttribute('alt') || '').slice(0, 280), sec: h ? h.textContent.replace(/[☆★]/g, '').trim() : '' };
+    };
+    var toast = function (msg) { var t = ui('div', 'rep-toast', msg); document.body.appendChild(t); setTimeout(function () { t.remove(); }, 3500); };
+    var ask = function (el) {
+      var d = el ? describe(el) : { kind: 'page', text: '', sec: '' }, pop = ui('div', 'flag-pop rep-pop');
+      pop.innerHTML = '<p class="fp-what">' + (el ? '<b>' + escH(d.kind) + '</b>' + (d.sec ? ' in ' + escH(d.sec) : '') + (d.text ? ': “' + escH(d.text.slice(0, 90)) + (d.text.length > 90 ? '…' : '') + '”' : '') : '<b>This page</b>') + '</p>' +
+        '<textarea rows="3" placeholder="What’s wrong? e.g. this dose doesn’t match lecture slide 14, which says 0.01 mg/kg"></textarea>' +
+        '<div class="acts"><button type="button" class="btn solid" data-a="send">Send to Arsh</button><button type="button" class="skip" data-a="x">Cancel</button></div>';
+      document.body.appendChild(pop);
+      var w = Math.min(360, window.innerWidth - 24); pop.style.width = w + 'px';
+      if (el) {
+        var r = el.getBoundingClientRect();
+        pop.style.left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + window.scrollX)) + 'px';
+        pop.style.top = (r.bottom + window.scrollY + 8) + 'px';
+      } else { pop.style.position = 'fixed'; pop.style.left = Math.max(12, (window.innerWidth - w) / 2) + 'px'; pop.style.top = '30vh'; }
+      var ta = pop.querySelector('textarea'); ta.focus();
+      pop.addEventListener('click', function (e) {
+        var a = e.target.dataset && e.target.dataset.a; if (!a) return;
+        if (a === 'send') {
+          if (!ta.value.trim()) { ta.focus(); ta.placeholder = 'Please say briefly what’s wrong'; return; }
+          var btn = e.target; btn.disabled = true; btn.textContent = 'Sending…';
+          fetch(LOG, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({
+            type: 'error report', name: USER.name, role: USER.role, device: dev(), page: here, section: d.sec, part: d.kind, quote: d.text, note: ta.value.trim() }) })
+            .then(function () { pop.remove(); toast('Thanks, sent to Arsh.'); }, function () { btn.disabled = false; btn.textContent = 'Send to Arsh'; toast('Couldn’t send. Check your connection and try again.'); });
+          return;
+        }
+        pop.remove();
+      });
+    };
+    fab.querySelector('.flag-go').addEventListener('click', function () { picking = true; bar.hidden = false; body.classList.add('flagging'); });
+    bar.addEventListener('click', function (e) { var a = e.target.dataset && e.target.dataset.a; if (!a) return; stop(); if (a === 'none') ask(null); });
+    document.addEventListener('mouseover', function (e) {
+      if (!picking || e.target.closest('[data-ui]')) return;
+      if (hov) hov.classList.remove('flag-hov'); hov = e.target; hov.classList.add('flag-hov');
+    });
+    document.addEventListener('click', function (e) {
+      if (!picking || e.target.closest('[data-ui]')) return;
+      e.preventDefault(); e.stopPropagation();
+      var el = e.target; stop(); ask(el);
+    }, true);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && picking) stop(); });
   })();
 
   // ---- search: module filter, abbreviations + plain-English synonyms, image results, jump to the matching line

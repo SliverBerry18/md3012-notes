@@ -149,7 +149,10 @@
       '<button type="button" class="md-eye" aria-label="Show password" aria-pressed="false">Show</button></span></label>' +
       '<label class="md-rem"><input type="checkbox" name="remember" checked> Stay signed in on this device</label>' +
       '<button type="submit">Open notes</button><p class="md-err" role="alert">' + (msg ? esc(msg) : '') + '</p>' +
-      '<p class="md-fine">Sign-ins are recorded.</p></form>';
+      '<p class="md-fine md-disc"><b>Personal study notes</b>, shared privately with a few friends. Please don’t forward the password. ' +
+      'AI-assisted from the 2026 MD3012 lectures, not reviewed by JCU staff, and they contain errors and gaps. ' +
+      'Check every dose, screening age and cut-off against the lecture slides and eTG/AMH before you rely on it.</p>' +
+      '<p class="md-fine">Your name, device and the pages you open are recorded.</p></form>';
     var f = g.querySelector('form');
     f.username.focus();
     var eye = f.querySelector('.md-eye');
