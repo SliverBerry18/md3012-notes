@@ -927,3 +927,6 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2.5
   .flag-fab:not(.rep-fab) .flag-go::before{content:"\270E";font-size:20px}
   .flag-fab .flag-list{min-height:40px}
 }
+/* dark mode: case + definition boxes were hard-coded white in notes.css (2026-10-30; ink on #fff was 1.24:1, now 11.8:1) */
+[data-theme="dark"] .notes .case,[data-theme="dark"] .notes .defs p{background:var(--card);color:var(--ink)}
+[data-theme="dark"] .notes .case{border-color:var(--txt)}
