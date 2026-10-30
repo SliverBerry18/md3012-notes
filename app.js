@@ -976,6 +976,7 @@
   };
 
   // ---- mnemonics page: test-me with line-by-line reveal (tap = next letter), or show all
+  (function () { // own scope (2026-10-30): a later `var resetCard` (Progress page) was overwriting this one, so "Hide again" did nothing
   var tm = document.querySelector('[data-testme]');
   if (tm) {
     var cards = document.querySelectorAll('.mn-card');
@@ -1008,6 +1009,7 @@
       var hint = document.querySelector('.mn-hint'); if (hint) hint.hidden = !on;
     });
   }
+  })();
 
   // ---- image rounds 2.0: subject decks with Anki-style spaced repetition (2026-10-15)
   var rroot = document.getElementById('images');
