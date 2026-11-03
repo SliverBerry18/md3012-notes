@@ -24,7 +24,7 @@
     try { if (localStorage.getItem('md3012:seen') === today) return; localStorage.setItem('md3012:seen', today); } catch (e) { return; }
     logVisit(who, 'return visit');
   };
-  var ADMIN_ONLY = ['practice', 'images'];   // page <main> ids only the admin can use; empty this list to open them to everyone
+  var ADMIN_ONLY = ['mocks', 'images'];   // page <main> ids only the admin can use; empty this list to open them to everyone
 
   var getSaved = function () { try { return JSON.parse(localStorage.getItem(SKEY) || sessionStorage.getItem(SKEY) || 'null'); } catch (e) { return null; } };
   var save = function (o, remember) { try { (remember ? localStorage : sessionStorage).setItem(SKEY, JSON.stringify(o)); } catch (e) {} };
