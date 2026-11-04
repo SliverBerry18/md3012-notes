@@ -43,7 +43,9 @@
         var raw = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(k.iv) }, kek, unb64(k.ct));
         var t = '';
         if (k.at) { try { t = td.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(k.iv2) }, kek, unb64(k.at))); } catch (e2) {} }
-        return { raw: new Uint8Array(raw), role: k.role, t: t };
+        var mk = '';
+        if (k.mk) { try { mk = tob64(new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(k.iv3) }, kek, unb64(k.mk)))); } catch (e3) {} }
+        return { raw: new Uint8Array(raw), role: k.role, t: t, mk: mk };
       } catch (e) { /* not this password */ }
     }
     return null;
@@ -108,12 +110,14 @@
     var enc = doc.getElementById('md-enc');
     var raw = await decrypt(unb64(JSON.parse(enc.textContent)));
     var page = JSON.parse(td.decode(raw));
-    window.MD3012_USER = { name: who.name, role: who.role, t: who.t || '' };
+    window.MD3012_USER = { name: who.name, role: who.role, t: who.t || '', mk: who.mk || '' };
     var t = doc.createElement('template'); t.innerHTML = page.b;
     // admin-only pages (temporary): members see a "coming soon" note and no links to them
     if (who.role !== 'admin') {
       body.classList.add('member');
+      if (who.role === 'tester') body.classList.add('tester');   // testers also get the mock papers
       ADMIN_ONLY.forEach(function (id) {
+        if (who.role === 'tester' && id === 'mocks') return;
         var m = t.content.getElementById(id); if (!m) return;
         m.id = id + '-off';
         m.innerHTML = '<h1>Coming soon</h1><p class="lead">This section is still being finished and will open shortly. Everything else in the notes is ready to use.</p><p><a class="btn solid" href="' + base + 'index.html">Back to the notes</a></p>';
@@ -172,7 +176,7 @@
       var r = await unwrap(pw);
       if (!r) { btn.disabled = false; btn.textContent = 'Open notes'; f.querySelector('.md-err').textContent = 'That password isn’t right. Check it and try again.'; f.password.select(); return; }
       f.password.type = 'password'; key = await crypto.subtle.importKey('raw', r.raw, 'AES-GCM', false, ['decrypt']);
-      var who = { name: name, role: r.role, k: tob64(r.raw), kid: A.kid, t: r.t || '' };
+      var who = { name: name, role: r.role, k: tob64(r.raw), kid: A.kid, t: r.t || '', mk: r.mk || '' };
       save(who, f.remember.checked);
       logVisit(who, 'sign-in'); try { localStorage.setItem('md3012:seen', new Date().toDateString()); } catch (e2) {}
       try { await open(who); } catch (err) { showLogin('Something went wrong opening this page. Please reload.'); }
