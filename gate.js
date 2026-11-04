@@ -27,7 +27,8 @@
   // MD3012 mocks button (4 Nov): usable by these sign-in names (first word, any case), the tester password and the admin;
   // greyed out for everyone else. A soft gate: names are not checked. To open it to all, delete the .mk-off block in open().
   var MOCKS_NAMES = ['arsh', 'tony', 'muns', 'mons'];
-  var ADMIN_ONLY = ['mocks', 'images'];   // page <main> ids only the admin can use; empty this list to open them to everyone
+  var MOCKS_OPEN = true;   // 4 Nov 2026, 7:20 pm: mock papers opened to every signed-in user (set false to go back to the names list)
+  var ADMIN_ONLY = ['images'];   // page <main> ids only the admin can use; empty this list to open them to everyone
 
   var getSaved = function () { try { return JSON.parse(localStorage.getItem(SKEY) || sessionStorage.getItem(SKEY) || 'null'); } catch (e) { return null; } };
   var save = function (o, remember) { try { (remember ? localStorage : sessionStorage).setItem(SKEY, JSON.stringify(o)); } catch (e) {} };
@@ -119,7 +120,7 @@
     if (who.role !== 'admin') {
       body.classList.add('member');
       if (who.role === 'tester') body.classList.add('tester');   // testers also get the mock papers
-      if (who.role !== 'tester' && MOCKS_NAMES.indexOf(String(who.name || '').trim().toLowerCase().split(/\s+/)[0]) < 0) t.content.querySelectorAll('a.mockbtn, a[href*="claude.ai/artifact"]').forEach(function (a) {   // 4 Nov: shown to everyone, usable by testers only
+      if (!MOCKS_OPEN && who.role !== 'tester' && MOCKS_NAMES.indexOf(String(who.name || '').trim().toLowerCase().split(/\s+/)[0]) < 0) t.content.querySelectorAll('a.mockbtn, a[href*="claude.ai/artifact"]').forEach(function (a) {   // 4 Nov: shown to everyone, usable by testers only
         a.removeAttribute('href'); a.removeAttribute('target'); a.classList.add('mk-off');
         a.setAttribute('role', 'link'); a.setAttribute('aria-disabled', 'true'); a.setAttribute('tabindex', '0');
         a.title = 'MD3012 mocks: coming soon. The mock papers open to everyone shortly.';
