@@ -24,6 +24,9 @@
     try { if (localStorage.getItem('md3012:seen') === today) return; localStorage.setItem('md3012:seen', today); } catch (e) { return; }
     logVisit(who, 'return visit');
   };
+  // MD3012 mocks button (4 Nov): usable by these sign-in names (first word, any case), the tester password and the admin;
+  // greyed out for everyone else. A soft gate: names are not checked. To open it to all, delete the .mk-off block in open().
+  var MOCKS_NAMES = ['arsh', 'tony', 'muns', 'mons'];
   var ADMIN_ONLY = ['mocks', 'images'];   // page <main> ids only the admin can use; empty this list to open them to everyone
 
   var getSaved = function () { try { return JSON.parse(localStorage.getItem(SKEY) || sessionStorage.getItem(SKEY) || 'null'); } catch (e) { return null; } };
@@ -116,7 +119,7 @@
     if (who.role !== 'admin') {
       body.classList.add('member');
       if (who.role === 'tester') body.classList.add('tester');   // testers also get the mock papers
-      else t.content.querySelectorAll('a.mockbtn, a[href*="claude.ai/artifact"]').forEach(function (a) {   // 4 Nov: shown to everyone, usable by testers only
+      if (who.role !== 'tester' && MOCKS_NAMES.indexOf(String(who.name || '').trim().toLowerCase().split(/\s+/)[0]) < 0) t.content.querySelectorAll('a.mockbtn, a[href*="claude.ai/artifact"]').forEach(function (a) {   // 4 Nov: shown to everyone, usable by testers only
         a.removeAttribute('href'); a.removeAttribute('target'); a.classList.add('mk-off');
         a.setAttribute('role', 'link'); a.setAttribute('aria-disabled', 'true'); a.setAttribute('tabindex', '0');
         a.title = 'MD3012 mocks: coming soon. The mock papers open to everyone shortly.';
