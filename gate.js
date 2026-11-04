@@ -3,7 +3,8 @@
    the site key; page bodies, data files, images and PDFs are then decrypted in the browser. */
 (function () {
   var A = window.MD3012_AUTH || { keys: [] }, doc = document, body = doc.body;
-  var depth = (doc.querySelector('script[src$="gate.js"]').getAttribute('src').match(/\.\.\//g) || []).length;
+  var me = doc.querySelector('script[src*="gate.js"]');   /* "*=": the link carries a ?v= version tag (4 Nov) */
+  var depth = ((me ? me.getAttribute('src') : '').match(/\.\.\//g) || []).length;
   var base = new Array(depth + 1).join('../');
   var SKEY = 'md3012:auth';
   var te = new TextEncoder(), td = new TextDecoder();
