@@ -116,6 +116,12 @@
     if (who.role !== 'admin') {
       body.classList.add('member');
       if (who.role === 'tester') body.classList.add('tester');   // testers also get the mock papers
+      else t.content.querySelectorAll('a.mockbtn, a[href*="claude.ai/artifact"]').forEach(function (a) {   // 4 Nov: shown to everyone, usable by testers only
+        a.removeAttribute('href'); a.removeAttribute('target'); a.classList.add('mk-off');
+        a.setAttribute('role', 'link'); a.setAttribute('aria-disabled', 'true'); a.setAttribute('tabindex', '0');
+        a.title = 'MD3012 mocks: coming soon. The mock papers open to everyone shortly.';
+        a.addEventListener('click', function (e) { e.preventDefault(); });
+      });
       ADMIN_ONLY.forEach(function (id) {
         if (who.role === 'tester' && id === 'mocks') return;
         var m = t.content.getElementById(id); if (!m) return;

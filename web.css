@@ -945,7 +945,8 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2.5
 [data-theme="dark"] .bar .mockbtn .logo{color:#A5B4FC}
 @media (hover:hover){.bar .mockbtn:hover{text-decoration:underline;text-underline-offset:4px;text-decoration-color:#4F46E5}}
 @media (max-width:640px){.bar .mockbtn{font-size:1.2rem;margin-right:6px}.bar .mockbtn .mk-long{display:none}.bar .mockbtn .logo{width:24px;height:24px}}
-body.member .mockbtn,body.member a[href*="claude.ai/artifact"]{display:none!important}
+/* 4 Nov (later): the mocks button shows for everyone; members get it greyed out (gate.js adds .mk-off) */
+.mk-off{opacity:.45;cursor:not-allowed!important;text-decoration:none!important}
 
 /* 2026-11-04: testers (tester password) see the mock papers button and links like the admin */
 body.member.tester .mockbtn{display:inline-flex!important}
