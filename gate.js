@@ -134,15 +134,16 @@
         m.innerHTML = '<h1>Coming soon</h1><p class="lead">This section is still being finished and will open shortly. Everything else in the notes is ready to use.</p><p><a class="btn solid" href="' + base + 'index.html">Back to the notes</a></p>';
       });
     }
-    // 5 Nov 2026: Claude marking on the mock papers is unreliable on phones and tablets (sign-in is not shared between apps and
-    // browsers), so the mocks buttons are greyed out there for everyone. Delete this block to switch them back on.
+    // 5 Nov 2026: Claude marking on the mock papers is unreliable on phones (sign-in is not shared between apps and
+    // browsers), so the mocks buttons are greyed out there for everyone. 11 Nov 2026: iPads and Android tablets allowed
+    // (Android phones say "Mobile" in the user agent, Android tablets do not). Delete this block to switch phones back on.
     var ua = navigator.userAgent || '';
-    if (/iPhone|iPod|iPad|Android/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) {
-      var MOB_MSG = 'The mock papers only work on a laptop or PC. Open the notes on a computer to use them.';
+    if (/iPhone|iPod/.test(ua) || (/Android/.test(ua) && /Mobile/.test(ua))) {
+      var MOB_MSG = 'The mock papers only work on a laptop, PC or tablet. Open the notes on one of those to use them.';
       t.content.querySelectorAll('a.mockbtn, a[href*="claude.ai/artifact"]').forEach(function (a) {
         a.removeAttribute('href'); a.removeAttribute('target'); a.classList.add('mk-off');
         a.setAttribute('role', 'link'); a.setAttribute('aria-disabled', 'true'); a.setAttribute('tabindex', '0');
-        a.title = MOB_MSG; a.setAttribute('aria-label', 'MD3012 mocks (laptop or PC only)');
+        a.title = MOB_MSG; a.setAttribute('aria-label', 'MD3012 mocks (laptop, PC or tablet only)');
       });
       doc.addEventListener('click', function (e) {
         var a = e.target.closest && e.target.closest('.mk-off'); if (!a) return;
